@@ -29,10 +29,11 @@ function wrap(fn) {
 
 // Fixed allowlist, not an arbitrary-URL-open primitive - keeps this handler
 // from becoming a way for renderer-side code to make the app open anything.
-const ALLOWED_EXTERNAL_URLS = new Set(["https://github.com/yt-dlp/yt-dlp"]);
+const ALLOWED_EXTERNAL_URLS = new Set(["https://github.com/yt-dlp/yt-dlp", "https://github.com/RNC-Tech/IceTools"]);
 
 function registerIpc() {
   ipcMain.handle("app:isAdmin", wrap(() => isAdmin()));
+  ipcMain.handle("app:getVersion", wrap(() => app.getVersion()));
   ipcMain.handle(
     "app:openExternal",
     wrap((url) => {
@@ -125,6 +126,7 @@ function createWindow() {
     },
   });
   loadRoute(win, "main");
+  updater.initUpdater(app, win);
   return win;
 }
 
@@ -162,6 +164,10 @@ function openDownloaderWindow() {
 app.whenReady().then(() => {
   registerIpc();
   createWindow();
+
+  // Give the window a few seconds to finish loading before the first check,
+  // rather than racing update IPC events against the renderer mounting.
+  setTimeout(() => updater.checkForUpdates(app).catch(() => {}), 5000);
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

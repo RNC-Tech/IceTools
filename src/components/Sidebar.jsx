@@ -1,9 +1,10 @@
 import React from "react";
 import { motion } from "motion/react";
-import { LayoutDashboard, MemoryStick, Trash2, ShieldAlert } from "lucide-react";
+import { LayoutDashboard, MemoryStick, Trash2, ShieldAlert, Info } from "lucide-react";
 import { Snowflake, Activity, Rocket, Settings, Zap, Wrench, ShieldCheck, Sun, Moon } from "./icons/index.js";
 import { DARK_THEME } from "../lib/useTheme.js";
 import AnimatedIcon from "./AnimatedIcon.jsx";
+import UpdateBanner from "./UpdateBanner.jsx";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, animated: false },
@@ -14,6 +15,7 @@ const NAV_ITEMS = [
   { id: "cleanup", label: "Disk Cleanup", icon: Trash2, animated: false },
   { id: "power", label: "Power & Network", icon: Zap, animated: true },
   { id: "extra", label: "Extra Tools", icon: Wrench, animated: true },
+  { id: "about", label: "About", icon: Info, animated: false },
 ];
 
 export default function Sidebar({ active, onSelect, isAdmin, theme, onToggleTheme }) {
@@ -52,7 +54,8 @@ export default function Sidebar({ active, onSelect, isAdmin, theme, onToggleThem
           );
         })}
       </ul>
-      <div className="p-3">
+      <div className="p-3 space-y-2">
+        <UpdateBanner />
         <div className={`badge w-full gap-1 ${isAdmin ? "badge-success" : "badge-warning"}`}>
           {isAdmin ? <ShieldCheck size={14} /> : <ShieldAlert size={14} />}
           {isAdmin ? "Running as Administrator" : "Limited (not elevated)"}

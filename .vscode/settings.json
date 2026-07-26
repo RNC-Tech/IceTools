@@ -1,1 +1,15 @@
-{}
+{
+  "files.watcherExclude": {
+    "**/release/**": true,
+    "**/node_modules/**": true,
+    "**/dist/**": true
+  },
+  "search.exclude": {
+    "**/release": true,
+    "**/node_modules": true,
+    "**/dist": true
+  },
+  "files.exclude": {
+    "**/release": true
+  }
+}

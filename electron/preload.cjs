@@ -7,6 +7,7 @@ function invoke(channel) {
 contextBridge.exposeInMainWorld("api", {
   app: {
     isAdmin: invoke("app:isAdmin"),
+    getVersion: invoke("app:getVersion"),
     openExternal: invoke("app:openExternal"),
     platform: process.platform,
   },
@@ -67,6 +68,16 @@ contextBridge.exposeInMainWorld("api", {
       const listener = (_event, data) => callback(data);
       ipcRenderer.on("ytdlp:progress", listener);
       return () => ipcRenderer.removeListener("ytdlp:progress", listener);
+    },
+  },
+  updater: {
+    check: invoke("updater:check"),
+    download: invoke("updater:download"),
+    install: invoke("updater:install"),
+    onEvent: (callback) => {
+      const listener = (_event, data) => callback(data);
+      ipcRenderer.on("updater:event", listener);
+      return () => ipcRenderer.removeListener("updater:event", listener);
     },
   },
 });

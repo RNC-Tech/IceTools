@@ -15,11 +15,11 @@
     "wait-and-start": "wait-on tcp:127.0.0.1:5173 && npm run dev:electron",
     "build:renderer": "vite build",
     "prebuild": "node electron/kill-previous-build.cjs",
-    "build": "npm run build:renderer && electron-builder",
+    "build": "npm run build:renderer && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder",
     "prepack": "node electron/kill-previous-build.cjs",
-    "pack": "npm run build:renderer && electron-builder --dir",
+    "pack": "npm run build:renderer && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --dir",
     "prerelease": "node electron/kill-previous-build.cjs",
-    "release": "npm run build:renderer && electron-builder --publish always"
+    "release": "npm run build:renderer && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --publish always"
   },
   "dependencies": {
     "electron-updater": "^6.8.9",
@@ -51,12 +51,13 @@
       "package.json"
     ],
     "directories": {
-      "output": "release"
+      "output": "../IceTools-release"
     },
     "win": {
       "target": "nsis",
       "requestedExecutionLevel": "requireAdministrator",
-      "icon": "public/icon.ico"
+      "icon": "public/icon.ico",
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
@@ -64,8 +65,8 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "REPLACE_WITH_GITHUB_USERNAME",
-      "repo": "REPLACE_WITH_REPO_NAME"
+      "owner": "RNC-Tech",
+      "repo": "IceTools"
     }
   },
   "allowScripts": {

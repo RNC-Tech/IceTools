@@ -1,5 +1,9 @@
 node_modules/
 dist/
-release/
 *.log
 Future Updates.txt
+
+# Build output now lives outside the project folder (see package.json's
+# build.directories.output) so Cursor's workspace/indexer never touches it -
+# this entry is just a safety net in case anything ever writes here again.
+release/

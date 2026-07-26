@@ -9,6 +9,7 @@ import Services from "./pages/Services.jsx";
 import Cleanup from "./pages/Cleanup.jsx";
 import PowerNetwork from "./pages/PowerNetwork.jsx";
 import ExtraTools from "./pages/ExtraTools.jsx";
+import About from "./pages/About.jsx";
 import { call } from "./lib/api.js";
 import { useTheme } from "./lib/useTheme.js";
 
@@ -21,6 +22,7 @@ const PAGES = {
   cleanup: Cleanup,
   power: PowerNetwork,
   extra: ExtraTools,
+  about: About,
 };
 
 export default function App() {

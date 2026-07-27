@@ -64,19 +64,6 @@ The app checks `RNC-Tech/IceTools`'s GitHub Releases on startup (packaged builds
 only - there's nothing to check against when running from source). When an update
 is found, a prompt appears in the sidebar to download it, then to restart and install.
 
-To publish a new version:
-
-1. Bump `version` in `package.json`.
-2. Generate a GitHub [personal access token](https://github.com/settings/tokens) with
-   `repo` scope (classic) or `contents: write` (fine-grained), scoped to this repo.
-3. Set it as an environment variable and publish:
-   ```powershell
-   $env:GH_TOKEN = "<your token>"
-   npm run release
-   ```
-   This builds, packages, and uploads the installer + update metadata directly to a
-   new GitHub Release. Existing installs will pick it up automatically.
-
 ## Project layout
 
 ```

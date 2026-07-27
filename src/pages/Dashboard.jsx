@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { LayoutDashboard, MemoryStick, HardDrive, Gpu, Sparkles, HardDriveDownload } from "lucide-react";
-import { Cpu } from "../components/icons/index.js";
+import { LayoutDashboard, MemoryStick, HardDrive, Gpu, HardDriveDownload, HeartPulse, ShieldQuestion } from "lucide-react";
+import { Cpu, Sparkles } from "../components/icons/index.js";
 import StatCard from "../components/StatCard.jsx";
 import AnimatedIcon from "../components/AnimatedIcon.jsx";
 import { Skeleton, StatCardSkeleton } from "../components/Skeleton.jsx";
 import { call, formatBytes } from "../lib/api.js";
 import { useToast } from "../components/ToastProvider.jsx";
 import ConfirmModal from "../components/ConfirmModal.jsx";
+import { useIconHover } from "../lib/useIconHover.js";
 
 const LIVE_POLL_MS = 2000;
 const SLOW_REFRESH_EVERY_N_POLLS = 10; // disks/GPU refreshed roughly every 20s
@@ -92,6 +93,7 @@ export default function Dashboard() {
   const [optimizeTarget, setOptimizeTarget] = useState(null);
   const [detailModal, setDetailModal] = useState(null); // "cpu" | "memory" | null
   const toast = useToast();
+  const trimIcon = useIconHover();
 
   useEffect(() => {
     let cancelled = false;
@@ -211,15 +213,19 @@ export default function Dashboard() {
               </span>
               <progress className="progress progress-primary w-full mt-1" value={stats.memory.usedPercent} max="100"></progress>
             </div>
-            <button
-              className="btn btn-xs btn-outline gap-1 w-fit tooltip"
-              data-tip="Reclaims idle RAM - always safe"
-              onClick={handleQuickTrim}
-              disabled={trimming}
-            >
-              {trimming ? <span className="loading loading-spinner loading-xs"></span> : <Sparkles size={12} />}
-              Quick Trim
-            </button>
+            <div className="flex justify-end">
+              <button
+                className="btn btn-sm btn-primary gap-1.5 tooltip"
+                data-tip="Reclaims idle RAM - always safe"
+                onClick={handleQuickTrim}
+                onMouseEnter={trimIcon.onMouseEnter}
+                onMouseLeave={trimIcon.onMouseLeave}
+                disabled={trimming}
+              >
+                {trimming ? <span className="loading loading-spinner loading-xs"></span> : <Sparkles ref={trimIcon.ref} size={14} />}
+                Quick Trim
+              </button>
+            </div>
           </div>
         </div>
 
@@ -242,28 +248,40 @@ export default function Dashboard() {
           {stats.disks.map((d) => (
             <div key={d.mount} className="card bg-base-200 shadow-sm">
               <div className="card-body p-4 gap-2">
-                <span className="flex items-center gap-1.5 text-xs uppercase tracking-wide opacity-60">
-                  <HardDrive size={13} />
-                  {d.mount}
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-xs uppercase tracking-wide opacity-60">
+                    <HardDrive size={13} />
+                    {d.mount}
+                  </span>
+                  <span
+                    className={`badge badge-sm gap-1 ${
+                      d.healthStatus === "Healthy" ? "badge-success" : d.healthStatus === "Unknown" ? "badge-ghost" : "badge-error"
+                    }`}
+                  >
+                    {d.healthStatus === "Unknown" ? <ShieldQuestion size={11} /> : <HeartPulse size={11} />}
+                    {d.healthStatus}
+                  </span>
+                </div>
                 <span className="text-2xl font-black">{d.usedPercent}%</span>
                 <span className="text-xs opacity-60">
                   {formatBytes(d.usedBytes)} / {formatBytes(d.totalBytes)}
                 </span>
                 <progress className="progress progress-primary w-full mt-1" value={d.usedPercent} max="100"></progress>
-                <button
-                  className="btn btn-xs btn-outline gap-1 w-fit tooltip"
-                  data-tip="Defragments HDDs or TRIMs SSDs - can take a while"
-                  onClick={() => setOptimizeTarget(d.mount)}
-                  disabled={optimizing.has(d.mount)}
-                >
-                  {optimizing.has(d.mount) ? (
-                    <span className="loading loading-spinner loading-xs"></span>
-                  ) : (
-                    <HardDriveDownload size={12} />
-                  )}
-                  {optimizing.has(d.mount) ? "Optimizing..." : "Optimize"}
-                </button>
+                <div className="flex justify-end">
+                  <button
+                    className="btn btn-sm btn-outline gap-1.5 tooltip"
+                    data-tip="Defragments HDDs or TRIMs SSDs - can take a while"
+                    onClick={() => setOptimizeTarget(d.mount)}
+                    disabled={optimizing.has(d.mount)}
+                  >
+                    {optimizing.has(d.mount) ? (
+                      <span className="loading loading-spinner loading-xs"></span>
+                    ) : (
+                      <HardDriveDownload size={14} />
+                    )}
+                    {optimizing.has(d.mount) ? "Optimizing..." : "Optimize"}
+                  </button>
+                </div>
               </div>
             </div>
           ))}

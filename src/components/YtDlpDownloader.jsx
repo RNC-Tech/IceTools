@@ -3,6 +3,7 @@ import { ListVideo, History, FolderOpen, Music, Video } from "lucide-react";
 import { Download } from "./icons/index.js";
 import { call, formatBytes } from "../lib/api.js";
 import { useToast } from "./ToastProvider.jsx";
+import { useIconHover } from "../lib/useIconHover.js";
 
 function formatOptionLabel(f) {
   const parts = [];
@@ -38,6 +39,7 @@ export default function YtDlpDownloader() {
   const [fetchingFormats, setFetchingFormats] = useState(false);
   const [history, setHistory] = useState([]);
   const toast = useToast();
+  const downloadIconHover = useIconHover();
 
   const loadHistory = useCallback(() => {
     call(window.api.ytdlp.getHistory())
@@ -211,8 +213,14 @@ export default function YtDlpDownloader() {
             )}
 
             <div className="flex justify-end">
-              <button className="btn btn-sm btn-primary gap-2" onClick={handleDownload} disabled={downloading}>
-                {downloading ? <span className="loading loading-spinner loading-xs"></span> : <Download size={14} />}
+              <button
+                className="btn btn-sm btn-primary gap-2"
+                onClick={handleDownload}
+                onMouseEnter={downloadIconHover.onMouseEnter}
+                onMouseLeave={downloadIconHover.onMouseLeave}
+                disabled={downloading}
+              >
+                {downloading ? <span className="loading loading-spinner loading-xs"></span> : <Download ref={downloadIconHover.ref} size={14} />}
                 Download
               </button>
             </div>

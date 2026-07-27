@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Info, RefreshCw, CheckCircle2 } from "lucide-react";
-import { Snowflake, ExternalLink } from "../components/icons/index.js";
+import { Snowflake } from "../components/icons/index.js";
 import AnimatedIcon from "../components/AnimatedIcon.jsx";
 import { call } from "../lib/api.js";
 import { useUpdater } from "../lib/useUpdater.js";
@@ -42,13 +42,6 @@ export default function About() {
             An all-in-one Windows optimizer - process monitor, memory cleaner, startup manager, services,
             disk cleanup, power &amp; network tools, and a few extras.
           </p>
-          <button
-            className="link link-hover text-xs mt-2 flex items-center gap-1"
-            onClick={() => window.api.app.openExternal("https://github.com/RNC-Tech/IceTools")}
-          >
-            <ExternalLink size={12} />
-            github.com/RNC-Tech/IceTools
-          </button>
         </div>
       </div>
 

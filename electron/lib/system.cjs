@@ -46,15 +46,49 @@ async function getLiveStats() {
   };
 }
 
+// Maps each drive letter to the HealthStatus/OperationalStatus of the
+// physical disk backing it (Get-Disk, via Storage module) - separate from
+// si.fsSize()'s usage numbers since health comes from the underlying disk,
+// not the volume, and one physical disk can back multiple drive letters.
+const DISK_HEALTH_SCRIPT = `
+Get-Volume | Where-Object { $_.DriveLetter } | ForEach-Object {
+  $letter = $_.DriveLetter
+  $health = 'Unknown'
+  $operational = 'Unknown'
+  try {
+    $partition = Get-Partition -DriveLetter $letter -ErrorAction Stop
+    $disk = Get-Disk -Number $partition.DiskNumber -ErrorAction Stop
+    $health = $disk.HealthStatus.ToString()
+    $operational = $disk.OperationalStatus.ToString()
+  } catch {}
+  [PSCustomObject]@{
+    Mount = "$letter" + ":"
+    HealthStatus = $health
+    OperationalStatus = $operational
+  }
+} | ConvertTo-Json
+`;
+
+async function getDiskHealth() {
+  try {
+    const rows = await runPowerShellJson(DISK_HEALTH_SCRIPT);
+    return new Map(rows.map((r) => [r.Mount, { healthStatus: r.HealthStatus, operationalStatus: r.OperationalStatus }]));
+  } catch {
+    return new Map();
+  }
+}
+
 // si.fsSize() shells out to PowerShell (Win32_LogicalDisk) - disk usage barely
 // moves second to second, so this is fetched far less often than live stats.
 async function getDisks() {
-  const fsSize = await si.fsSize();
+  const [fsSize, health] = await Promise.all([si.fsSize(), getDiskHealth()]);
   return fsSize.map((d) => ({
     mount: d.mount,
     totalBytes: d.size,
     usedBytes: d.used,
     usedPercent: Math.round(d.use * 10) / 10,
+    healthStatus: health.get(d.mount)?.healthStatus || "Unknown",
+    operationalStatus: health.get(d.mount)?.operationalStatus || "Unknown",
   }));
 }
 
@@ -160,6 +194,11 @@ async function getProcesses() {
   return top.map((p) => ({ ...p, icon: icons.get(p.path) || null }));
 }
 
+async function getProcessCount() {
+  const out = await runPowerShell("(Get-Process).Count");
+  return { count: parseInt(out, 10) || 0 };
+}
+
 async function killProcess(pid) {
   const numericPid = Number(pid);
   if (!Number.isInteger(numericPid) || numericPid <= 0) {
@@ -189,6 +228,7 @@ module.exports = {
   getDisks,
   getGpuStats,
   getProcesses,
+  getProcessCount,
   killProcess,
   setPriority,
   optimizeDisk,

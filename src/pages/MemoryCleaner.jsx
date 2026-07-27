@@ -7,6 +7,7 @@ import ConfirmModal from "../components/ConfirmModal.jsx";
 import AppIcon from "../components/AppIcon.jsx";
 import AnimatedIcon from "../components/AnimatedIcon.jsx";
 import { TableSkeleton } from "../components/Skeleton.jsx";
+import { useIconHover } from "../lib/useIconHover.js";
 
 // There's no natural "100%" for a pile of junk files - 2GB is treated as a
 // visually "full" bar. Byte-accurate totals per category live on Disk Cleanup.
@@ -22,6 +23,7 @@ export default function MemoryCleaner() {
   const [memoryPercent, setMemoryPercent] = useState(null);
   const [tempBytes, setTempBytes] = useState(null);
   const toast = useToast();
+  const trimIcon = useIconHover();
 
   const loadApps = useCallback(async () => {
     setLoading(true);
@@ -133,12 +135,14 @@ export default function MemoryCleaner() {
         </div>
         <div className="flex gap-2">
           <button
-            className="btn btn-outline gap-2 tooltip tooltip-top"
+            className="btn btn-primary gap-2 tooltip tooltip-top"
             data-tip="Reclaims idle RAM from every process - never closes anything"
             onClick={() => runClean([])}
+            onMouseEnter={trimIcon.onMouseEnter}
+            onMouseLeave={trimIcon.onMouseLeave}
             disabled={working}
           >
-            {working ? <span className="loading loading-spinner loading-sm"></span> : <Sparkles size={16} />}
+            {working ? <span className="loading loading-spinner loading-sm"></span> : <Sparkles ref={trimIcon.ref} size={16} />}
             Quick Trim (safe)
           </button>
           <button

@@ -1,5 +1,5 @@
 import React from "react";
-import { DownloadCloud, RotateCw } from "lucide-react";
+import { DownloadCloud, RotateCw, CheckCircle2 } from "lucide-react";
 import { useUpdater } from "../lib/useUpdater.js";
 import { useToast } from "./ToastProvider.jsx";
 
@@ -7,7 +7,16 @@ export default function UpdateBanner() {
   const { status, version, percent, error, download, install } = useUpdater();
   const toast = useToast();
 
-  if (status === "idle" || status === "checking" || status === "up-to-date") return null;
+  if (status === "idle" || status === "checking") return null;
+
+  if (status === "up-to-date") {
+    return (
+      <div className="text-xs text-success/80 px-1 flex items-center gap-1.5">
+        <CheckCircle2 size={13} />
+        Up to date
+      </div>
+    );
+  }
 
   if (status === "error") {
     return (

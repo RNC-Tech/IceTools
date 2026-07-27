@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld("api", {
     getVersion: invoke("app:getVersion"),
     relaunchAsAdmin: invoke("app:relaunchAsAdmin"),
     openExternal: invoke("app:openExternal"),
+    showMainWindow: invoke("app:showMainWindow"),
     platform: process.platform,
   },
   system: {
@@ -17,6 +18,7 @@ contextBridge.exposeInMainWorld("api", {
     getLiveStats: invoke("system:getLiveStats"),
     getGpuStats: invoke("system:getGpuStats"),
     getProcesses: invoke("system:getProcesses"),
+    getProcessCount: invoke("system:getProcessCount"),
     killProcess: invoke("system:killProcess"),
     setPriority: invoke("system:setPriority"),
     optimizeDisk: invoke("system:optimizeDisk"),
@@ -76,6 +78,9 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.on("ytdlp:progress", listener);
       return () => ipcRenderer.removeListener("ytdlp:progress", listener);
     },
+  },
+  widget: {
+    hide: invoke("widget:hide"),
   },
   updater: {
     check: invoke("updater:check"),

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, Tray, Menu, screen } = require("electron");
 const path = require("node:path");
 
 const isDev = process.env.NODE_ENV === "development";
@@ -15,6 +15,7 @@ const externalTools = require("./lib/externalTools.cjs");
 const ytdlp = require("./lib/ytdlp.cjs");
 const updater = require("./lib/updater.cjs");
 const { isAdmin, relaunchAsAdmin } = require("./lib/elevate.cjs");
+const { buildTrayIcon } = require("./lib/trayIcon.cjs");
 
 function wrap(fn) {
   return async (_event, ...args) => {
@@ -29,7 +30,7 @@ function wrap(fn) {
 
 // Fixed allowlist, not an arbitrary-URL-open primitive - keeps this handler
 // from becoming a way for renderer-side code to make the app open anything.
-const ALLOWED_EXTERNAL_URLS = new Set(["https://github.com/yt-dlp/yt-dlp", "https://github.com/RNC-Tech/IceTools"]);
+const ALLOWED_EXTERNAL_URLS = new Set(["https://github.com/yt-dlp/yt-dlp"]);
 
 function registerIpc() {
   ipcMain.handle("app:isAdmin", wrap(() => isAdmin()));
@@ -42,11 +43,20 @@ function registerIpc() {
       return shell.openExternal(url);
     })
   );
+  ipcMain.handle("app:showMainWindow", wrap(() => showMainWindow()));
+  ipcMain.handle(
+    "widget:hide",
+    wrap(() => {
+      if (widgetWindow && !widgetWindow.isDestroyed()) widgetWindow.hide();
+      return { success: true };
+    })
+  );
 
   ipcMain.handle("system:getStats", wrap(() => system.getStats()));
   ipcMain.handle("system:getLiveStats", wrap(() => system.getLiveStats()));
   ipcMain.handle("system:getGpuStats", wrap(() => system.getGpuStats()));
   ipcMain.handle("system:getProcesses", wrap(() => system.getProcesses()));
+  ipcMain.handle("system:getProcessCount", wrap(() => system.getProcessCount()));
   ipcMain.handle("system:killProcess", wrap((pid) => system.killProcess(pid)));
   ipcMain.handle("system:optimizeDisk", wrap((mount) => system.optimizeDisk(mount)));
   ipcMain.handle("system:setPriority", wrap((pid, priority) => system.setPriority(pid, priority)));
@@ -111,13 +121,19 @@ function registerIpc() {
 function loadRoute(win, routeName) {
   if (isDev) {
     win.loadURL(`http://127.0.0.1:5173/?window=${routeName}`);
-    win.webContents.openDevTools({ mode: "detach" });
+    // Skip auto-opening devtools for the widget: it's a frameless flyout
+    // that hides itself on blur, and the detached devtools window stealing
+    // focus the instant it opens would immediately trigger that same hide.
+    if (routeName !== "widget") win.webContents.openDevTools({ mode: "detach" });
   } else {
     win.loadFile(path.join(__dirname, "..", "dist", "index.html"), { query: { window: routeName } });
   }
 }
 
+let mainWindow = null;
 function createWindow() {
+  if (mainWindow && !mainWindow.isDestroyed()) return mainWindow;
+
   const win = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -134,7 +150,22 @@ function createWindow() {
   });
   loadRoute(win, "main");
   updater.initUpdater(app, win);
+  mainWindow = win;
+  win.on("closed", () => {
+    mainWindow = null;
+  });
   return win;
+}
+
+function showMainWindow() {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+  } else {
+    createWindow();
+  }
+  return { success: true };
 }
 
 // Singleton - reuses/focuses the existing Downloader window instead of
@@ -147,10 +178,10 @@ function openDownloaderWindow() {
   }
 
   downloaderWindow = new BrowserWindow({
-    width: 480,
-    height: 560,
-    minWidth: 420,
-    minHeight: 480,
+    width: 620,
+    height: 680,
+    minWidth: 480,
+    minHeight: 520,
     backgroundColor: "#ECEBE6",
     autoHideMenuBar: true,
     title: "IceTools - Downloader",
@@ -168,9 +199,88 @@ function openDownloaderWindow() {
   return { success: true };
 }
 
+const WIDGET_WIDTH = 480;
+const WIDGET_HEIGHT = 560;
+
+// Anchors the widget above the tray icon, clamped to the work area of the
+// display the tray sits on (excludes the taskbar) so it never renders
+// off-screen or overlapping the taskbar itself.
+function getWidgetPosition() {
+  const trayBounds = tray.getBounds();
+  const display = screen.getDisplayNearestPoint({ x: trayBounds.x, y: trayBounds.y });
+  const workArea = display.workArea;
+
+  let x = Math.round(trayBounds.x + trayBounds.width / 2 - WIDGET_WIDTH / 2);
+  x = Math.max(workArea.x + 8, Math.min(x, workArea.x + workArea.width - WIDGET_WIDTH - 8));
+  const y = Math.round(workArea.y + workArea.height - WIDGET_HEIGHT - 8);
+  return { x, y };
+}
+
+// Singleton, hidden rather than closed on blur/toggle - recreating a
+// frameless BrowserWindow on every tray click would make the flyout feel
+// laggy compared to native tray popups.
+let widgetWindow = null;
+function createWidgetWindow() {
+  if (widgetWindow && !widgetWindow.isDestroyed()) return widgetWindow;
+
+  widgetWindow = new BrowserWindow({
+    width: WIDGET_WIDTH,
+    height: WIDGET_HEIGHT,
+    show: false,
+    frame: false,
+    resizable: false,
+    movable: true,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    hasShadow: true,
+    backgroundColor: "#ECEBE6",
+    webPreferences: {
+      preload: path.join(__dirname, "preload.cjs"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  });
+  loadRoute(widgetWindow, "widget");
+  widgetWindow.on("blur", () => {
+    if (widgetWindow && !widgetWindow.isDestroyed()) widgetWindow.hide();
+  });
+  widgetWindow.on("closed", () => {
+    widgetWindow = null;
+  });
+  return widgetWindow;
+}
+
+function toggleWidget() {
+  const win = createWidgetWindow();
+  if (win.isVisible()) {
+    win.hide();
+    return;
+  }
+  const { x, y } = getWidgetPosition();
+  win.setPosition(x, y);
+  win.show();
+  win.focus();
+}
+
+let tray = null;
+function createTray() {
+  tray = new Tray(buildTrayIcon());
+  tray.setToolTip("IceTools");
+  tray.on("click", toggleWidget);
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: "Open IceTools", click: showMainWindow },
+      { type: "separator" },
+      { label: "Quit IceTools", click: () => app.quit() },
+    ])
+  );
+}
+
 app.whenReady().then(() => {
   registerIpc();
   createWindow();
+  createTray();
 
   // Give the window a few seconds to finish loading before the first check,
   // rather than racing update IPC events against the renderer mounting.
@@ -181,6 +291,17 @@ app.whenReady().then(() => {
   });
 });
 
+// Note: once the widget has been opened at least once, it's hidden rather
+// than closed when dismissed, so Electron never sees "all windows closed"
+// after that point - closing the main window leaves IceTools running in the
+// tray (by design, so the widget stays reachable), until "Quit IceTools" is
+// chosen from the tray menu. Before the widget is ever opened, this behaves
+// exactly as before: closing the main window quits the app.
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
+});
+
+app.on("before-quit", () => {
+  if (tray) tray.destroy();
+  if (widgetWindow && !widgetWindow.isDestroyed()) widgetWindow.destroy();
 });

@@ -9,3 +9,29 @@ body,
 #root {
   height: 100%;
 }
+
+/* No window in this app should ever show a native OS scrollbar - any page
+   that needs to scroll does so via its own explicit overflow-y-auto
+   container. Without this, DaisyUI's .toast (position: fixed, rendered
+   unconditionally by ToastProvider even with zero toasts) can push the
+   document's own scrollable area past the viewport in small frameless
+   windows like the tray widget, showing a spurious scrollbar. */
+html,
+body {
+  overflow: hidden;
+}
+
+/* DaisyUI's .btn sets flex-wrap: wrap by default, which stacks an icon above
+   its label onto two lines whenever the button's content is wider than its
+   rendered width - every icon+label button in this app is meant to stay on
+   one line, growing/shrinking in width instead.
+   DaisyUI's .tooltip also sets display: inline-block, and since .tooltip's
+   rules come after .btn's in the generated stylesheet, any button that's
+   also a tooltip trigger (btn + tooltip on the same element) loses its
+   inline-flex layout entirely - dropping the icon (a block-level element)
+   onto its own line above the label. Restoring display here fixes that. */
+.btn {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}

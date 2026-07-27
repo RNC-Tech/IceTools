@@ -2,11 +2,13 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import DownloaderWindow from "./pages/DownloaderWindow.jsx";
+import WidgetWindow from "./pages/WidgetWindow.jsx";
 import { ToastProvider } from "./components/ToastProvider.jsx";
 import "./index.css";
 
 const windowName = new URLSearchParams(window.location.search).get("window");
-const RootPage = windowName === "downloader" ? DownloaderWindow : App;
+const ROOT_PAGES = { downloader: DownloaderWindow, widget: WidgetWindow };
+const RootPage = ROOT_PAGES[windowName] || App;
 
 // Electron syncs each BrowserWindow's title to document.title once the page
 // loads, which would otherwise clobber the "IceTools - Downloader" title set

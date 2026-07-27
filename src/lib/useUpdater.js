@@ -3,9 +3,9 @@ import { call } from "./api.js";
 
 // Mirrors the states electron/lib/updater.cjs emits: idle -> checking ->
 // available -> downloading -> downloaded, or up-to-date/error at any point.
-// "up-to-date" (as opposed to just resetting to "idle") exists so a
-// manually-triggered check can give visible confirmation - the passive
-// sidebar banner treats it the same as idle and stays hidden either way.
+// "up-to-date" (as opposed to just resetting to "idle") exists so both the
+// sidebar banner and the About page can give visible "Up to date"
+// confirmation after a check, instead of silently going back to idle.
 export function useUpdater() {
   const [status, setStatus] = useState("idle");
   const [version, setVersion] = useState(null);

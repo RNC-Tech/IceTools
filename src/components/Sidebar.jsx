@@ -8,6 +8,7 @@ import AnimatedIcon from "./AnimatedIcon.jsx";
 import UpdateBanner from "./UpdateBanner.jsx";
 import ConfirmModal from "./ConfirmModal.jsx";
 import { useToast } from "./ToastProvider.jsx";
+import { useIconHover } from "../lib/useIconHover.js";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, animated: false },
@@ -21,10 +22,43 @@ const NAV_ITEMS = [
   { id: "about", label: "About", icon: Info, animated: false },
 ];
 
+function NavItem({ item, active, onSelect }) {
+  const Icon = item.icon;
+  const iconHover = useIconHover();
+
+  return (
+    <li>
+      <motion.a
+        className={active ? "active" : ""}
+        onClick={onSelect}
+        onMouseEnter={iconHover.onMouseEnter}
+        onMouseLeave={iconHover.onMouseLeave}
+        whileHover={{ x: 3 }}
+        whileTap={{ scale: 0.97 }}
+        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+      >
+        {item.animated ? <Icon ref={iconHover.ref} size={16} /> : <AnimatedIcon icon={Icon} size={16} />}
+        {item.label}
+      </motion.a>
+    </li>
+  );
+}
+
 export default function Sidebar({ active, onSelect, isAdmin, theme, onToggleTheme }) {
   const isDark = theme === DARK_THEME;
   const [confirmOpen, setConfirmOpen] = useState(false);
   const toast = useToast();
+  const sunHover = useIconHover();
+  const moonHover = useIconHover();
+
+  function handleThemeHoverEnter() {
+    sunHover.onMouseEnter();
+    moonHover.onMouseEnter();
+  }
+  function handleThemeHoverLeave() {
+    sunHover.onMouseLeave();
+    moonHover.onMouseLeave();
+  }
 
   async function handleRelaunch() {
     setConfirmOpen(false);
@@ -43,30 +77,21 @@ export default function Sidebar({ active, onSelect, isAdmin, theme, onToggleThem
           <h1 className="text-lg font-black tracking-wide leading-tight">IceTools</h1>
           <p className="text-xs opacity-60">Windows Optimizer</p>
         </div>
-        <label className="swap swap-rotate btn btn-ghost btn-circle btn-sm" title={isDark ? "Switch to light theme" : "Switch to dark theme"}>
+        <label
+          className="swap swap-rotate btn btn-ghost btn-circle btn-sm"
+          title={isDark ? "Switch to light theme" : "Switch to dark theme"}
+          onMouseEnter={handleThemeHoverEnter}
+          onMouseLeave={handleThemeHoverLeave}
+        >
           <input type="checkbox" checked={isDark} onChange={onToggleTheme} />
-          <Sun size={18} className="swap-off" />
-          <Moon size={18} className="swap-on" />
+          <Sun ref={sunHover.ref} size={18} className="swap-off" />
+          <Moon ref={moonHover.ref} size={18} className="swap-on" />
         </label>
       </div>
       <ul className="menu w-full flex-1 px-2">
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          return (
-            <li key={item.id}>
-              <motion.a
-                className={active === item.id ? "active" : ""}
-                onClick={() => onSelect(item.id)}
-                whileHover={{ x: 3 }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              >
-                {item.animated ? <Icon size={16} /> : <AnimatedIcon icon={Icon} size={16} />}
-                {item.label}
-              </motion.a>
-            </li>
-          );
-        })}
+        {NAV_ITEMS.map((item) => (
+          <NavItem key={item.id} item={item} active={active === item.id} onSelect={() => onSelect(item.id)} />
+        ))}
       </ul>
       <div className="p-3 space-y-2">
         <UpdateBanner />

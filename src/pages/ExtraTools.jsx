@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import { Terminal, Download, ExternalLink, Wrench } from "../components/icons/index.js";
 import { call } from "../lib/api.js";
 import { useToast } from "../components/ToastProvider.jsx";
+import { useIconHover } from "../lib/useIconHover.js";
 
 function CttWinUtilCard() {
   const [launching, setLaunching] = useState(false);
   const toast = useToast();
+  const iconHover = useIconHover();
 
   async function handleLaunch() {
     setLaunching(true);
@@ -36,9 +38,11 @@ function CttWinUtilCard() {
             className="btn btn-primary btn-sm gap-2 tooltip tooltip-left"
             data-tip="Opens the CTT Windows Utility in a separate window"
             onClick={handleLaunch}
+            onMouseEnter={iconHover.onMouseEnter}
+            onMouseLeave={iconHover.onMouseLeave}
             disabled={launching}
           >
-            {launching ? <span className="loading loading-spinner loading-xs"></span> : <ExternalLink size={14} />}
+            {launching ? <span className="loading loading-spinner loading-xs"></span> : <ExternalLink ref={iconHover.ref} size={14} />}
             Launch
           </button>
         </div>
@@ -50,6 +54,7 @@ function CttWinUtilCard() {
 function YtDlpLauncherCard() {
   const [opening, setOpening] = useState(false);
   const toast = useToast();
+  const iconHover = useIconHover();
 
   async function handleOpen() {
     setOpening(true);
@@ -78,9 +83,11 @@ function YtDlpLauncherCard() {
             className="btn btn-primary btn-sm gap-2 tooltip tooltip-left"
             data-tip="Opens the downloader in a separate window"
             onClick={handleOpen}
+            onMouseEnter={iconHover.onMouseEnter}
+            onMouseLeave={iconHover.onMouseLeave}
             disabled={opening}
           >
-            {opening ? <span className="loading loading-spinner loading-xs"></span> : <ExternalLink size={14} />}
+            {opening ? <span className="loading loading-spinner loading-xs"></span> : <ExternalLink ref={iconHover.ref} size={14} />}
             Open Downloader
           </button>
         </div>

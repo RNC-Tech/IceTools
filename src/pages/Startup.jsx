@@ -87,7 +87,8 @@ export default function Startup() {
                 <td>
                   <input
                     type="checkbox"
-                    className="toggle toggle-success toggle-sm"
+                    className="toggle toggle-success toggle-sm tooltip tooltip-left"
+                    data-tip={item.enabled ? "Disable this startup item" : "Enable this startup item"}
                     checked={item.enabled}
                     onChange={() => handleToggle(item)}
                   />

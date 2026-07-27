@@ -1,10 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "motion/react";
 import { LayoutDashboard, MemoryStick, Trash2, ShieldAlert, Info } from "lucide-react";
 import { Snowflake, Activity, Rocket, Settings, Zap, Wrench, ShieldCheck, Sun, Moon } from "./icons/index.js";
 import { DARK_THEME } from "../lib/useTheme.js";
+import { call } from "../lib/api.js";
 import AnimatedIcon from "./AnimatedIcon.jsx";
 import UpdateBanner from "./UpdateBanner.jsx";
+import ConfirmModal from "./ConfirmModal.jsx";
+import { useToast } from "./ToastProvider.jsx";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, animated: false },
@@ -20,6 +23,17 @@ const NAV_ITEMS = [
 
 export default function Sidebar({ active, onSelect, isAdmin, theme, onToggleTheme }) {
   const isDark = theme === DARK_THEME;
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const toast = useToast();
+
+  async function handleRelaunch() {
+    setConfirmOpen(false);
+    try {
+      await call(window.api.app.relaunchAsAdmin());
+    } catch (err) {
+      toast.error(err.message);
+    }
+  }
 
   return (
     <aside className="w-56 shrink-0 bg-base-200 h-full flex flex-col border-r border-base-300">
@@ -56,11 +70,32 @@ export default function Sidebar({ active, onSelect, isAdmin, theme, onToggleThem
       </ul>
       <div className="p-3 space-y-2">
         <UpdateBanner />
-        <div className={`badge w-full gap-1 ${isAdmin ? "badge-success" : "badge-warning"}`}>
-          {isAdmin ? <ShieldCheck size={14} /> : <ShieldAlert size={14} />}
-          {isAdmin ? "Running as Administrator" : "Limited (not elevated)"}
-        </div>
+        {isAdmin ? (
+          <div className="badge badge-success w-full gap-1">
+            <ShieldCheck size={14} />
+            Running as Administrator
+          </div>
+        ) : (
+          <button
+            className="badge badge-warning w-full gap-1 tooltip tooltip-top"
+            data-tip="Click to restart with admin rights"
+            onClick={() => setConfirmOpen(true)}
+          >
+            <ShieldAlert size={14} />
+            Limited (not elevated)
+          </button>
+        )}
       </div>
+
+      <ConfirmModal
+        open={confirmOpen}
+        title="Restart as Administrator?"
+        message="IceTools will close and reopen with a UAC prompt for administrator rights. This unlocks actions like managing all-users startup entries, services, and network adapters."
+        confirmLabel="Restart as Admin"
+        danger={false}
+        onConfirm={handleRelaunch}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </aside>
   );
 }

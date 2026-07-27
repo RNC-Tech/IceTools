@@ -1,10 +1,19 @@
+import { isAdminError, notifyAdminRequired } from "./adminPrompt.js";
+
 /**
  * Every preload-exposed method resolves { ok, data } or { ok:false, error }.
  * `call` unwraps that envelope and throws so callers can use plain try/catch.
+ * Permission-flavored failures additionally trigger the global "needs admin"
+ * modal (see adminPrompt.js) on top of whatever the caller's own catch block
+ * does (usually a toast) - callers don't need any special-casing themselves.
  */
 export async function call(promise) {
   const result = await promise;
-  if (!result.ok) throw new Error(result.error || "Unknown error");
+  if (!result.ok) {
+    const message = result.error || "Unknown error";
+    if (isAdminError(message)) notifyAdminRequired(message);
+    throw new Error(message);
+  }
   return result.data;
 }
 

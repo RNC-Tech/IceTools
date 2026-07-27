@@ -10,6 +10,7 @@ import Cleanup from "./pages/Cleanup.jsx";
 import PowerNetwork from "./pages/PowerNetwork.jsx";
 import ExtraTools from "./pages/ExtraTools.jsx";
 import About from "./pages/About.jsx";
+import AdminRequiredModal from "./components/AdminRequiredModal.jsx";
 import { call } from "./lib/api.js";
 import { useTheme } from "./lib/useTheme.js";
 
@@ -54,6 +55,7 @@ export default function App() {
           </motion.div>
         </AnimatePresence>
       </main>
+      <AdminRequiredModal />
     </div>
   );
 }

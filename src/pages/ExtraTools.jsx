@@ -30,9 +30,14 @@ function CttWinUtilCard() {
           Chris Titus Tech's open-source debloat/tweak/config toolkit. Opens in its own window - review what it
           offers before applying anything.
         </p>
-        <div className="badge badge-ghost badge-sm w-fit">Needs internet access</div>
+        <div className="badge badge-warning badge-sm w-fit">Needs internet access</div>
         <div className="card-actions justify-end mt-2">
-          <button className="btn btn-primary btn-sm gap-2" onClick={handleLaunch} disabled={launching}>
+          <button
+            className="btn btn-primary btn-sm gap-2 tooltip tooltip-left"
+            data-tip="Opens the CTT Windows Utility in a separate window"
+            onClick={handleLaunch}
+            disabled={launching}
+          >
             {launching ? <span className="loading loading-spinner loading-xs"></span> : <ExternalLink size={14} />}
             Launch
           </button>
@@ -69,7 +74,12 @@ function YtDlpLauncherCard() {
           independently of the rest of IceTools.
         </p>
         <div className="card-actions justify-end mt-2">
-          <button className="btn btn-primary btn-sm gap-2" onClick={handleOpen} disabled={opening}>
+          <button
+            className="btn btn-primary btn-sm gap-2 tooltip tooltip-left"
+            data-tip="Opens the downloader in a separate window"
+            onClick={handleOpen}
+            disabled={opening}
+          >
             {opening ? <span className="loading loading-spinner loading-xs"></span> : <ExternalLink size={14} />}
             Open Downloader
           </button>

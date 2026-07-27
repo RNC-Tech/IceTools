@@ -1,4 +1,7 @@
-const { runCommand } = require("./exec.cjs");
+const si = require("systeminformation");
+const { runCommand, runPowerShell } = require("./exec.cjs");
+
+const BATTERY_PERCENTAGE_REG_PATH = "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced";
 
 const GUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 const ULTIMATE_PERFORMANCE_SOURCE_GUID = "e9a42b02-d5df-448d-aa00-03f14749eb61";
@@ -30,4 +33,56 @@ async function enableUltimatePerformance() {
   return listPlans();
 }
 
-module.exports = { listPlans, setActivePlan, enableUltimatePerformance };
+async function getBatteryInfo() {
+  const battery = await si.battery();
+  if (!battery.hasBattery) return { hasBattery: false };
+  return {
+    hasBattery: true,
+    percent: battery.percent,
+    isCharging: battery.isCharging,
+    acConnected: battery.acConnected,
+    cycleCount: battery.cycleCount || null,
+    model: battery.model || null,
+    manufacturer: battery.manufacturer || null,
+    serial: battery.serial || null,
+    // "Health" as manufacturers/OS use the term: how much of the original
+    // designed capacity the battery can still actually hold.
+    healthPercent:
+      battery.designedCapacity && battery.maxCapacity
+        ? Math.round((battery.maxCapacity / battery.designedCapacity) * 100)
+        : null,
+  };
+}
+
+// Windows 11's "Battery percentage" taskbar toggle - HKCU-scoped, so no
+// admin needed. Explorer re-reads this live in current builds; older builds
+// may need a taskbar refresh (sign out/in) to visually update.
+async function getShowBatteryPercentage() {
+  try {
+    const out = await runPowerShell(
+      "(Get-ItemProperty -Path $env:ICE_REG_PATH -Name IsBatteryPercentageEnabled -ErrorAction Stop).IsBatteryPercentageEnabled",
+      { env: { ICE_REG_PATH: BATTERY_PERCENTAGE_REG_PATH } }
+    );
+    return out.trim() === "1";
+  } catch {
+    return false;
+  }
+}
+
+async function setShowBatteryPercentage(enabled) {
+  await runPowerShell(
+    `if (-not (Test-Path $env:ICE_REG_PATH)) { New-Item -Path $env:ICE_REG_PATH -Force | Out-Null }
+     New-ItemProperty -Path $env:ICE_REG_PATH -Name IsBatteryPercentageEnabled -Value $env:ICE_VALUE -PropertyType DWord -Force | Out-Null`,
+    { env: { ICE_REG_PATH: BATTERY_PERCENTAGE_REG_PATH, ICE_VALUE: enabled ? "1" : "0" } }
+  );
+  return { success: true };
+}
+
+module.exports = {
+  listPlans,
+  setActivePlan,
+  enableUltimatePerformance,
+  getBatteryInfo,
+  getShowBatteryPercentage,
+  setShowBatteryPercentage,
+};

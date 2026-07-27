@@ -70,7 +70,7 @@ export default function Cleanup() {
           <AnimatedIcon icon={Trash2} size={20} spin />
           Disk & Junk Cleanup
         </h2>
-        <button className="btn btn-sm" onClick={scan} disabled={loading}>
+        <button className="btn btn-sm tooltip tooltip-left" data-tip="Re-scan disk usage" onClick={scan} disabled={loading}>
           Rescan
         </button>
       </div>
@@ -97,7 +97,8 @@ export default function Cleanup() {
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
-                  className="checkbox checkbox-sm"
+                  className="checkbox checkbox-sm tooltip tooltip-right"
+                  data-tip="Include this category in the next cleanup"
                   checked={selected.has(c.id)}
                   onChange={() => toggleSelected(c.id)}
                 />
@@ -120,7 +121,8 @@ export default function Cleanup() {
           {selected.size > 0 ? `${selected.size} selected · ~${formatBytes(totalSelectedBytes)}` : "Select categories to clean"}
         </div>
         <button
-          className="btn btn-primary"
+          className="btn btn-primary tooltip tooltip-left"
+          data-tip="Permanently delete files in the selected categories"
           disabled={selected.size === 0 || cleaning}
           onClick={() => setConfirmOpen(true)}
         >

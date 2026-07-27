@@ -14,7 +14,7 @@ const tweaks = require("./lib/tweaks.cjs");
 const externalTools = require("./lib/externalTools.cjs");
 const ytdlp = require("./lib/ytdlp.cjs");
 const updater = require("./lib/updater.cjs");
-const { isAdmin } = require("./lib/elevate.cjs");
+const { isAdmin, relaunchAsAdmin } = require("./lib/elevate.cjs");
 
 function wrap(fn) {
   return async (_event, ...args) => {
@@ -34,6 +34,7 @@ const ALLOWED_EXTERNAL_URLS = new Set(["https://github.com/yt-dlp/yt-dlp", "http
 function registerIpc() {
   ipcMain.handle("app:isAdmin", wrap(() => isAdmin()));
   ipcMain.handle("app:getVersion", wrap(() => app.getVersion()));
+  ipcMain.handle("app:relaunchAsAdmin", wrap(() => relaunchAsAdmin()));
   ipcMain.handle(
     "app:openExternal",
     wrap((url) => {
@@ -47,6 +48,7 @@ function registerIpc() {
   ipcMain.handle("system:getGpuStats", wrap(() => system.getGpuStats()));
   ipcMain.handle("system:getProcesses", wrap(() => system.getProcesses()));
   ipcMain.handle("system:killProcess", wrap((pid) => system.killProcess(pid)));
+  ipcMain.handle("system:optimizeDisk", wrap((mount) => system.optimizeDisk(mount)));
   ipcMain.handle("system:setPriority", wrap((pid, priority) => system.setPriority(pid, priority)));
 
   ipcMain.handle("memory:listBackgroundApps", wrap(() => memory.listBackgroundApps()));
@@ -64,6 +66,9 @@ function registerIpc() {
   ipcMain.handle("cleanup:clean", wrap((categoryIds) => cleanup.clean(categoryIds)));
 
   ipcMain.handle("power:listPlans", wrap(() => power.listPlans()));
+  ipcMain.handle("power:getBatteryInfo", wrap(() => power.getBatteryInfo()));
+  ipcMain.handle("power:getShowBatteryPercentage", wrap(() => power.getShowBatteryPercentage()));
+  ipcMain.handle("power:setShowBatteryPercentage", wrap((enabled) => power.setShowBatteryPercentage(enabled)));
   ipcMain.handle("power:setActivePlan", wrap((guid) => power.setActivePlan(guid)));
   ipcMain.handle("power:enableUltimatePerformance", wrap(() => power.enableUltimatePerformance()));
 
@@ -71,6 +76,8 @@ function registerIpc() {
   ipcMain.handle("network:setAdapterEnabled", wrap((name, enabled) => network.setAdapterEnabled(name, enabled)));
   ipcMain.handle("network:flushDns", wrap(() => network.flushDns()));
   ipcMain.handle("network:resetWinsock", wrap(() => network.resetWinsock()));
+  ipcMain.handle("network:getDnsServers", wrap((name) => network.getDnsServers(name)));
+  ipcMain.handle("network:setDnsServers", wrap((name, servers) => network.setDnsServers(name, servers)));
   ipcMain.handle("network:resetTcpIp", wrap(() => network.resetTcpIp()));
 
   ipcMain.handle("tweaks:list", wrap(() => tweaks.list()));

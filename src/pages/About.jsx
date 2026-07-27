@@ -57,7 +57,11 @@ export default function About() {
           <h4 className="font-medium text-sm">Updates</h4>
 
           {status === "idle" && (
-            <button className="btn btn-sm btn-primary gap-2 w-fit" onClick={handleCheck}>
+            <button
+              className="btn btn-sm btn-primary gap-2 w-fit tooltip tooltip-right"
+              data-tip="Check GitHub Releases for a newer version"
+              onClick={handleCheck}
+            >
               <RefreshCw size={14} />
               Check for Updates
             </button>

@@ -32,6 +32,7 @@ export default function YtDlpDownloader() {
   const [mode, setMode] = useState("video");
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(null);
+  const [progressLine, setProgressLine] = useState("");
   const [formats, setFormats] = useState(null);
   const [formatId, setFormatId] = useState("");
   const [fetchingFormats, setFetchingFormats] = useState(false);
@@ -98,7 +99,11 @@ export default function YtDlpDownloader() {
     }
     setDownloading(true);
     setProgress(0);
-    const unsubscribe = window.api.ytdlp.onProgress((data) => setProgress(data.percent));
+    setProgressLine("Starting...");
+    const unsubscribe = window.api.ytdlp.onProgress((data) => {
+      setProgress(data.percent);
+      setProgressLine(data.line || "");
+    });
     try {
       await call(window.api.ytdlp.download({ url: url.trim(), mode, formatId: formatId || undefined }));
       toast.success("Download complete - saved to your Downloads folder.");
@@ -112,6 +117,7 @@ export default function YtDlpDownloader() {
       unsubscribe();
       setDownloading(false);
       setProgress(null);
+      setProgressLine("");
     }
   }
 
@@ -211,7 +217,13 @@ export default function YtDlpDownloader() {
               </button>
             </div>
             {downloading && (
-              <progress className="progress progress-primary w-full" value={progress ?? 0} max="100"></progress>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs opacity-60">
+                  <span className="truncate">{progressLine}</span>
+                  <span className="shrink-0 ml-2">{progress ?? 0}%</span>
+                </div>
+                <progress className="progress progress-primary w-full" value={progress ?? 0} max="100"></progress>
+              </div>
             )}
 
             {history.length > 0 && (

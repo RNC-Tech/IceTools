@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld("api", {
   app: {
     isAdmin: invoke("app:isAdmin"),
     getVersion: invoke("app:getVersion"),
+    relaunchAsAdmin: invoke("app:relaunchAsAdmin"),
     openExternal: invoke("app:openExternal"),
     platform: process.platform,
   },
@@ -18,6 +19,7 @@ contextBridge.exposeInMainWorld("api", {
     getProcesses: invoke("system:getProcesses"),
     killProcess: invoke("system:killProcess"),
     setPriority: invoke("system:setPriority"),
+    optimizeDisk: invoke("system:optimizeDisk"),
   },
   memory: {
     listBackgroundApps: invoke("memory:listBackgroundApps"),
@@ -39,6 +41,9 @@ contextBridge.exposeInMainWorld("api", {
   },
   power: {
     listPlans: invoke("power:listPlans"),
+    getBatteryInfo: invoke("power:getBatteryInfo"),
+    getShowBatteryPercentage: invoke("power:getShowBatteryPercentage"),
+    setShowBatteryPercentage: invoke("power:setShowBatteryPercentage"),
     setActivePlan: invoke("power:setActivePlan"),
     enableUltimatePerformance: invoke("power:enableUltimatePerformance"),
   },
@@ -48,6 +53,8 @@ contextBridge.exposeInMainWorld("api", {
     flushDns: invoke("network:flushDns"),
     resetWinsock: invoke("network:resetWinsock"),
     resetTcpIp: invoke("network:resetTcpIp"),
+    getDnsServers: invoke("network:getDnsServers"),
+    setDnsServers: invoke("network:setDnsServers"),
   },
   tweaks: {
     list: invoke("tweaks:list"),

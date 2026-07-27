@@ -132,12 +132,18 @@ export default function MemoryCleaner() {
           {selected.size > 0 ? `${selected.size} selected · ~${formatBytes(selectedBytes)}` : "Select background apps to close, or just trim"}
         </div>
         <div className="flex gap-2">
-          <button className="btn btn-outline gap-2" onClick={() => runClean([])} disabled={working}>
+          <button
+            className="btn btn-outline gap-2 tooltip tooltip-top"
+            data-tip="Reclaims idle RAM from every process - never closes anything"
+            onClick={() => runClean([])}
+            disabled={working}
+          >
             {working ? <span className="loading loading-spinner loading-sm"></span> : <Sparkles size={16} />}
             Quick Trim (safe)
           </button>
           <button
-            className="btn btn-error gap-2"
+            className="btn btn-error gap-2 tooltip tooltip-top"
+            data-tip="Force-closes the selected apps, then trims memory"
             disabled={selected.size === 0 || working}
             onClick={() => setConfirmOpen(true)}
           >
@@ -150,13 +156,28 @@ export default function MemoryCleaner() {
       <div className="flex items-center justify-between pt-2">
         <h3 className="text-sm font-medium opacity-70">Background Apps</h3>
         <div className="flex gap-2">
-          <button className="btn btn-xs" onClick={selectAll} disabled={loading || apps.length === 0}>
+          <button
+            className="btn btn-xs tooltip tooltip-top"
+            data-tip="Select every background app"
+            onClick={selectAll}
+            disabled={loading || apps.length === 0}
+          >
             Select All
           </button>
-          <button className="btn btn-xs" onClick={clearSelection} disabled={selected.size === 0}>
+          <button
+            className="btn btn-xs tooltip tooltip-top"
+            data-tip="Clear the current selection"
+            onClick={clearSelection}
+            disabled={selected.size === 0}
+          >
             Clear
           </button>
-          <button className="btn btn-xs" onClick={loadApps} disabled={loading}>
+          <button
+            className="btn btn-xs tooltip tooltip-top"
+            data-tip="Refresh the background apps list"
+            onClick={loadApps}
+            disabled={loading}
+          >
             Rescan
           </button>
         </div>

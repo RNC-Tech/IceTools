@@ -100,7 +100,8 @@ export default function Services() {
                   </td>
                   <td>
                     <select
-                      className="select select-xs select-bordered"
+                      className="select select-xs select-bordered tooltip"
+                      data-tip="When this service starts"
                       value={s.startType}
                       onChange={(e) => handleStartType(s.name, e.target.value)}
                     >
@@ -113,15 +114,27 @@ export default function Services() {
                   </td>
                   <td className="flex gap-1">
                     {s.status === "Running" ? (
-                      <button className="btn btn-xs btn-outline" onClick={() => setStopTarget(s)}>
+                      <button
+                        className="btn btn-xs btn-outline tooltip tooltip-left"
+                        data-tip="Stop this service"
+                        onClick={() => setStopTarget(s)}
+                      >
                         Stop
                       </button>
                     ) : (
-                      <button className="btn btn-xs btn-outline btn-success" onClick={() => runAction(s.name, "start")}>
+                      <button
+                        className="btn btn-xs btn-outline btn-success tooltip tooltip-left"
+                        data-tip="Start this service"
+                        onClick={() => runAction(s.name, "start")}
+                      >
                         Start
                       </button>
                     )}
-                    <button className="btn btn-xs btn-outline" onClick={() => runAction(s.name, "restart")}>
+                    <button
+                      className="btn btn-xs btn-outline tooltip tooltip-left"
+                      data-tip="Stop then start this service"
+                      onClick={() => runAction(s.name, "restart")}
+                    >
                       Restart
                     </button>
                   </td>

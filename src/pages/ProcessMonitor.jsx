@@ -107,7 +107,8 @@ export default function ProcessMonitor() {
                 <td>{formatBytes(p.memBytes)}</td>
                 <td>
                   <select
-                    className="select select-xs select-bordered"
+                    className="select select-xs select-bordered tooltip tooltip-left"
+                    data-tip="Change CPU scheduling priority"
                     value={p.priority || "Normal"}
                     onChange={(e) => handlePriority(p.pid, p.name, e.target.value)}
                   >
@@ -119,7 +120,11 @@ export default function ProcessMonitor() {
                   </select>
                 </td>
                 <td>
-                  <button className="btn btn-xs btn-error btn-outline gap-1" onClick={() => setKillTarget(p)}>
+                  <button
+                    className="btn btn-xs btn-error btn-outline gap-1 tooltip tooltip-left"
+                    data-tip="Forcibly end this process"
+                    onClick={() => setKillTarget(p)}
+                  >
                     <Square size={12} />
                     End
                   </button>

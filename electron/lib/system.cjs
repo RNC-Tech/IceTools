@@ -34,7 +34,10 @@ async function getLiveStats() {
   const free = os.freemem();
   const used = total - free;
   return {
-    cpu: { loadPercent: Math.round(load.currentLoad * 10) / 10 },
+    cpu: {
+      loadPercent: Math.round(load.currentLoad * 10) / 10,
+      perCore: load.cpus.map((c) => Math.round(c.load * 10) / 10),
+    },
     memory: {
       totalBytes: total,
       usedBytes: used,
@@ -83,6 +86,17 @@ async function getGpuStats() {
     gpuAvailable = false;
     return { available: false };
   }
+}
+
+// defrag /O lets Windows pick the right strategy per media type - actual
+// defragmentation for HDDs, TRIM for SSDs - the same tool "Optimize Drives"
+// uses under the hood. Can genuinely take minutes on a large/fragmented HDD,
+// so this gets a much longer timeout than our other commands.
+async function optimizeDisk(mount) {
+  const driveLetter = mount.replace(/[\\/]+$/, "");
+  if (!/^[A-Za-z]:$/.test(driveLetter)) throw new Error("Invalid drive");
+  await runCommand("defrag.exe", [driveLetter, "/O"], { timeout: 30 * 60 * 1000 });
+  return { success: true };
 }
 
 async function getStats() {
@@ -169,4 +183,14 @@ async function setPriority(pid, priority) {
   return { success: true };
 }
 
-module.exports = { getStats, getLiveStats, getDisks, getGpuStats, getProcesses, killProcess, setPriority, PRIORITY_MAP };
+module.exports = {
+  getStats,
+  getLiveStats,
+  getDisks,
+  getGpuStats,
+  getProcesses,
+  killProcess,
+  setPriority,
+  optimizeDisk,
+  PRIORITY_MAP,
+};

@@ -71,6 +71,34 @@ async function setDnsServers(adapterName, servers) {
   return { success: true };
 }
 
+// netsh's own output format, not a structured API - no ConvertTo-Json
+// equivalent exists for "wlan show interfaces", so this parses its
+// plain-text table instead.
+async function getWifiSignal() {
+  let output;
+  try {
+    output = await runCommand("netsh.exe", ["wlan", "show", "interfaces"]);
+  } catch {
+    return { available: false };
+  }
+
+  const signalMatch = output.match(/^\s*Signal\s*:\s*(\d+)%/m);
+  const ssidMatch = output.match(/^\s*SSID\s*:\s*(.+?)\s*$/m);
+  const radioMatch = output.match(/^\s*Radio type\s*:\s*(.+?)\s*$/m);
+  const stateMatch = output.match(/^\s*State\s*:\s*(.+?)\s*$/m);
+
+  if (!signalMatch || !stateMatch || stateMatch[1].trim().toLowerCase() !== "connected") {
+    return { available: false };
+  }
+
+  return {
+    available: true,
+    signalPercent: parseInt(signalMatch[1], 10),
+    ssid: ssidMatch ? ssidMatch[1].trim() : null,
+    radioType: radioMatch ? radioMatch[1].trim() : null,
+  };
+}
+
 module.exports = {
   listAdapters,
   setAdapterEnabled,
@@ -79,4 +107,5 @@ module.exports = {
   resetTcpIp,
   getDnsServers,
   setDnsServers,
+  getWifiSignal,
 };

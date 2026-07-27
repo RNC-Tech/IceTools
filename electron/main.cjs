@@ -3,6 +3,19 @@ const path = require("node:path");
 
 const isDev = process.env.NODE_ENV === "development";
 
+// electron-updater's underlying HTTP requests can emit low-level network
+// errors (DNS failure, connection reset, no internet) that bypass both the
+// checkForUpdates() promise rejection and the autoUpdater "error" event -
+// left unhandled, Node's default EventEmitter behavior turns those into an
+// uncaught exception that crashes the whole app. A flaky network check
+// should never take down the app, so log and swallow instead.
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught exception:", err);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled rejection:", reason);
+});
+
 const system = require("./lib/system.cjs");
 const memory = require("./lib/memory.cjs");
 const startup = require("./lib/startup.cjs");
@@ -16,6 +29,11 @@ const ytdlp = require("./lib/ytdlp.cjs");
 const updater = require("./lib/updater.cjs");
 const { isAdmin, relaunchAsAdmin } = require("./lib/elevate.cjs");
 const { buildTrayIcon } = require("./lib/trayIcon.cjs");
+const settingsStore = require("./lib/settings.cjs");
+const uninstaller = require("./lib/uninstaller.cjs");
+const speedtest = require("./lib/speedtest.cjs");
+const security = require("./lib/security.cjs");
+const changelog = require("./lib/changelog.cjs");
 
 function wrap(fn) {
   return async (_event, ...args) => {
@@ -49,6 +67,29 @@ function registerIpc() {
     wrap(() => {
       if (widgetWindow && !widgetWindow.isDestroyed()) widgetWindow.hide();
       return { success: true };
+    })
+  );
+
+  ipcMain.handle("changelog:get", wrap(() => changelog.getChangelog()));
+
+  ipcMain.handle("security:getDefenderStatus", wrap(() => security.getDefenderStatus()));
+  ipcMain.handle("security:getFirewallStatus", wrap(() => security.getFirewallStatus()));
+  ipcMain.handle("security:openWindowsSecurity", wrap(() => security.openWindowsSecurity()));
+
+  ipcMain.handle("uninstaller:listApps", wrap(() => uninstaller.listInstalledApps()));
+  ipcMain.handle("uninstaller:uninstallApp", wrap((keyPath) => uninstaller.uninstallApp(keyPath)));
+  ipcMain.handle("uninstaller:scanLeftovers", wrap((apps) => uninstaller.scanLeftovers(apps)));
+  ipcMain.handle("uninstaller:deleteLeftovers", wrap((items) => uninstaller.deleteLeftovers(items)));
+
+  ipcMain.handle("settings:get", wrap(() => settingsStore.load()));
+  ipcMain.handle(
+    "settings:set",
+    wrap((partial) => {
+      const updated = settingsStore.save(partial);
+      if (typeof partial.runAtStartup === "boolean") {
+        app.setLoginItemSettings({ openAtLogin: updated.runAtStartup });
+      }
+      return updated;
     })
   );
 
@@ -89,11 +130,14 @@ function registerIpc() {
   ipcMain.handle("network:getDnsServers", wrap((name) => network.getDnsServers(name)));
   ipcMain.handle("network:setDnsServers", wrap((name, servers) => network.setDnsServers(name, servers)));
   ipcMain.handle("network:resetTcpIp", wrap(() => network.resetTcpIp()));
+  ipcMain.handle("network:getWifiSignal", wrap(() => network.getWifiSignal()));
+  ipcMain.handle("network:runSpeedTest", wrap(() => speedtest.runSpeedTest()));
 
   ipcMain.handle("tweaks:list", wrap(() => tweaks.list()));
   ipcMain.handle("tweaks:apply", wrap((id, enabled) => tweaks.apply(id, enabled)));
 
   ipcMain.handle("tools:runCttWinUtil", wrap(() => externalTools.runCttWinUtil()));
+  ipcMain.handle("tools:runMassGraveActivation", wrap(() => externalTools.runMassGraveActivation()));
   ipcMain.handle("tools:openDownloaderWindow", wrap(() => openDownloaderWindow()));
 
   ipcMain.handle("ytdlp:isInstalled", wrap(() => ytdlp.isInstalled()));
@@ -153,6 +197,25 @@ function createWindow() {
   mainWindow = win;
   win.on("closed", () => {
     mainWindow = null;
+  });
+  win.on("close", (event) => {
+    if (isQuitting) return;
+    if (settingsStore.load().closeToTray) {
+      event.preventDefault();
+      win.hide();
+    } else {
+      // Not closing to tray: let this window close normally, but also
+      // explicitly quit - once the widget has been opened once, its hidden
+      // (not closed) window would otherwise silently block the default
+      // window-all-closed quit, leaving the app running invisibly.
+      app.quit();
+    }
+  });
+  win.on("minimize", (event) => {
+    if (settingsStore.load().minimizeToTray) {
+      event.preventDefault();
+      win.hide();
+    }
   });
   return win;
 }
@@ -279,29 +342,34 @@ function createTray() {
 
 app.whenReady().then(() => {
   registerIpc();
+  app.setLoginItemSettings({ openAtLogin: settingsStore.load().runAtStartup });
   createWindow();
   createTray();
 
   // Give the window a few seconds to finish loading before the first check,
   // rather than racing update IPC events against the renderer mounting.
-  setTimeout(() => updater.checkForUpdates(app).catch(() => {}), 5000);
+  if (settingsStore.load().autoCheckUpdates) {
+    setTimeout(() => updater.checkForUpdates(app).catch(() => {}), 5000);
+  }
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 
-// Note: once the widget has been opened at least once, it's hidden rather
-// than closed when dismissed, so Electron never sees "all windows closed"
-// after that point - closing the main window leaves IceTools running in the
-// tray (by design, so the widget stays reachable), until "Quit IceTools" is
-// chosen from the tray menu. Before the widget is ever opened, this behaves
-// exactly as before: closing the main window quits the app.
+// Mirrors mainWindow's own "close" handler (which explicitly quits when
+// closeToTray is off), so this is mostly a fallback for edge cases where no
+// main window ever existed - the explicit app.quit() in that handler is what
+// makes quitting deterministic regardless of whether the widget's hidden
+// (not closed) window would otherwise keep Electron from seeing "all
+// windows closed".
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 
+let isQuitting = false;
 app.on("before-quit", () => {
+  isQuitting = true;
   if (tray) tray.destroy();
   if (widgetWindow && !widgetWindow.isDestroyed()) widgetWindow.destroy();
 });

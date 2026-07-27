@@ -1,7 +1,18 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
-import { LayoutDashboard, MemoryStick, Trash2, ShieldAlert, Info } from "lucide-react";
-import { Snowflake, Activity, Rocket, Settings, Zap, Wrench, ShieldCheck, Sun, Moon } from "./icons/index.js";
+import { LayoutDashboard, MemoryStick, Trash2, ShieldAlert, Info, Package } from "lucide-react";
+import {
+  Snowflake,
+  Activity,
+  Rocket,
+  Settings,
+  Zap,
+  Wrench,
+  ShieldCheck,
+  Sun,
+  Moon,
+  SlidersHorizontal,
+} from "./icons/index.js";
 import { DARK_THEME } from "../lib/useTheme.js";
 import { call } from "../lib/api.js";
 import AnimatedIcon from "./AnimatedIcon.jsx";
@@ -17,8 +28,11 @@ const NAV_ITEMS = [
   { id: "startup", label: "Startup Manager", icon: Rocket, animated: true },
   { id: "services", label: "Services", icon: Settings, animated: true },
   { id: "cleanup", label: "Disk Cleanup", icon: Trash2, animated: false },
+  { id: "uninstaller", label: "Uninstaller", icon: Package, animated: false },
   { id: "power", label: "Power & Network", icon: Zap, animated: true },
   { id: "extra", label: "Extra Tools", icon: Wrench, animated: true },
+  { id: "privacy", label: "Privacy & Security", icon: ShieldCheck, animated: true },
+  { id: "settings", label: "Settings", icon: SlidersHorizontal, animated: true },
   { id: "about", label: "About", icon: Info, animated: false },
 ];
 

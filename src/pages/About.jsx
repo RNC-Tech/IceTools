@@ -8,13 +8,17 @@ import { useToast } from "../components/ToastProvider.jsx";
 
 export default function About() {
   const [version, setVersion] = useState(null);
-  const { status, version: updateVersion, percent, error, check, download, install } = useUpdater();
+  const [changelog, setChangelog] = useState(null);
+  const { status, version: updateVersion, releaseNotes, percent, error, check, download, install } = useUpdater();
   const toast = useToast();
 
   useEffect(() => {
     call(window.api.app.getVersion())
       .then(setVersion)
       .catch(() => setVersion(null));
+    call(window.api.changelog.get())
+      .then(setChangelog)
+      .catch(() => setChangelog([]));
   }, []);
 
   async function handleCheck() {
@@ -83,6 +87,12 @@ export default function About() {
           {status === "available" && (
             <div className="space-y-2">
               <span className="text-sm">Version {updateVersion} is available.</span>
+              {releaseNotes && (
+                <div className="bg-base-100 rounded-lg p-3 max-h-48 overflow-y-auto">
+                  <div className="text-xs font-medium opacity-60 mb-1">What's new</div>
+                  <pre className="text-xs whitespace-pre-wrap font-sans opacity-80">{releaseNotes}</pre>
+                </div>
+              )}
               <button
                 className="btn btn-sm btn-primary gap-2 w-fit"
                 onClick={() => download().catch((err) => toast.error(`Download failed: ${err.message}`))}
@@ -120,6 +130,36 @@ export default function About() {
                 <RefreshCw size={14} />
                 Try Again
               </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="card bg-base-200 max-w-md">
+        <div className="card-body gap-2">
+          <h4 className="font-medium text-sm">Changelog</h4>
+          {changelog === null && <span className="loading loading-spinner loading-sm"></span>}
+          {changelog !== null && changelog.length === 0 && (
+            <p className="text-sm opacity-60">No release history available right now.</p>
+          )}
+          {changelog !== null && changelog.length > 0 && (
+            <div className="space-y-1.5 max-h-72 overflow-y-auto">
+              {changelog.map((r, i) => (
+                <details key={r.version} className="collapse collapse-arrow bg-base-100" open={i === 0}>
+                  <summary className="collapse-title text-sm font-medium min-h-0 py-2">
+                    {r.name}
+                    {r.prerelease && <span className="badge badge-warning badge-xs ml-2">pre-release</span>}
+                    {r.publishedAt && (
+                      <span className="text-xs opacity-50 ml-2">{new Date(r.publishedAt).toLocaleDateString()}</span>
+                    )}
+                  </summary>
+                  <div className="collapse-content">
+                    <pre className="text-xs whitespace-pre-wrap font-sans opacity-80">
+                      {r.notes || "No release notes provided."}
+                    </pre>
+                  </div>
+                </details>
+              ))}
             </div>
           )}
         </div>

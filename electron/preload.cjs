@@ -57,6 +57,22 @@ contextBridge.exposeInMainWorld("api", {
     resetTcpIp: invoke("network:resetTcpIp"),
     getDnsServers: invoke("network:getDnsServers"),
     setDnsServers: invoke("network:setDnsServers"),
+    getWifiSignal: invoke("network:getWifiSignal"),
+    runSpeedTest: invoke("network:runSpeedTest"),
+  },
+  changelog: {
+    get: invoke("changelog:get"),
+  },
+  security: {
+    getDefenderStatus: invoke("security:getDefenderStatus"),
+    getFirewallStatus: invoke("security:getFirewallStatus"),
+    openWindowsSecurity: invoke("security:openWindowsSecurity"),
+  },
+  uninstaller: {
+    listApps: invoke("uninstaller:listApps"),
+    uninstallApp: invoke("uninstaller:uninstallApp"),
+    scanLeftovers: invoke("uninstaller:scanLeftovers"),
+    deleteLeftovers: invoke("uninstaller:deleteLeftovers"),
   },
   tweaks: {
     list: invoke("tweaks:list"),
@@ -64,6 +80,7 @@ contextBridge.exposeInMainWorld("api", {
   },
   tools: {
     runCttWinUtil: invoke("tools:runCttWinUtil"),
+    runMassGraveActivation: invoke("tools:runMassGraveActivation"),
     openDownloaderWindow: invoke("tools:openDownloaderWindow"),
   },
   ytdlp: {
@@ -81,6 +98,10 @@ contextBridge.exposeInMainWorld("api", {
   },
   widget: {
     hide: invoke("widget:hide"),
+  },
+  settings: {
+    get: invoke("settings:get"),
+    set: invoke("settings:set"),
   },
   updater: {
     check: invoke("updater:check"),

@@ -4,9 +4,32 @@ const os = require("node:os");
 const { runPowerShell } = require("./exec.cjs");
 
 const LOCAL_APP_DATA = process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local");
+const APP_DATA = process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming");
 const WINDOWS_DIR = process.env.WINDIR || "C:\\Windows";
 
-function categoryDefs() {
+// Cache only, deliberately - never cookies, saved logins, history, or
+// extensions, so this can never sign anyone out of anything. Each Chromium
+// browser stores several separate cache folders per profile; Firefox keeps
+// its cache under a randomly-named profile folder, discovered at scan time.
+function chromiumCacheDirs(userDataDir) {
+  return ["Default", "Profile 1", "Profile 2"].flatMap((profile) => [
+    path.join(userDataDir, profile, "Cache"),
+    path.join(userDataDir, profile, "Code Cache"),
+    path.join(userDataDir, profile, "GPUCache"),
+  ]);
+}
+
+async function firefoxCacheDirs() {
+  const profilesRoot = path.join(APP_DATA, "Mozilla", "Firefox", "Profiles");
+  try {
+    const entries = await fs.readdir(profilesRoot, { withFileTypes: true });
+    return entries.filter((e) => e.isDirectory()).map((e) => path.join(profilesRoot, e.name, "cache2"));
+  } catch {
+    return [];
+  }
+}
+
+async function categoryDefs() {
   return [
     {
       id: "userTemp",
@@ -46,12 +69,14 @@ function categoryDefs() {
     },
     {
       id: "browserCache",
-      label: "Browser Caches (Chrome / Edge)",
-      description: "Chrome & Edge Cache folders",
+      label: "Browser Caches (Chrome / Edge / Brave / Firefox)",
+      description: "Cache only - never cookies, saved logins, history, or extensions",
       kind: "dirContents",
       dirs: [
-        path.join(LOCAL_APP_DATA, "Google", "Chrome", "User Data", "Default", "Cache"),
-        path.join(LOCAL_APP_DATA, "Microsoft", "Edge", "User Data", "Default", "Cache"),
+        ...chromiumCacheDirs(path.join(LOCAL_APP_DATA, "Google", "Chrome", "User Data")),
+        ...chromiumCacheDirs(path.join(LOCAL_APP_DATA, "Microsoft", "Edge", "User Data")),
+        ...chromiumCacheDirs(path.join(LOCAL_APP_DATA, "BraveSoftware", "Brave-Browser", "User Data")),
+        ...(await firefoxCacheDirs()),
       ],
     },
     {
@@ -128,7 +153,7 @@ async function getTempFilesSize() {
 
 async function scan() {
   const results = [];
-  for (const cat of categoryDefs()) {
+  for (const cat of await categoryDefs()) {
     if (cat.kind === "recycleBin") {
       results.push({ id: cat.id, label: cat.label, description: cat.description, sizeBytes: null, fileCount: null });
       continue;
@@ -182,7 +207,7 @@ async function clearMatchedFiles(dirPath, pattern) {
 }
 
 async function clean(categoryIds) {
-  const defs = categoryDefs().filter((c) => categoryIds.includes(c.id));
+  const defs = (await categoryDefs()).filter((c) => categoryIds.includes(c.id));
   const outcomes = [];
   for (const cat of defs) {
     try {

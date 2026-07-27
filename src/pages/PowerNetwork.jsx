@@ -1,10 +1,90 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Zap, Wifi, SlidersHorizontal } from "../components/icons/index.js";
-import { BatteryCharging, BatteryFull, BatteryMedium, BatteryLow, BatteryWarning, Globe } from "lucide-react";
+import {
+  BatteryCharging,
+  BatteryFull,
+  BatteryMedium,
+  BatteryLow,
+  BatteryWarning,
+  Globe,
+  Gauge,
+  ArrowDown,
+  ArrowUp,
+  Timer,
+  SignalHigh,
+  SignalMedium,
+  SignalLow,
+  SignalZero,
+} from "lucide-react";
 import { call } from "../lib/api.js";
 import { useToast } from "../components/ToastProvider.jsx";
 import ConfirmModal from "../components/ConfirmModal.jsx";
 import { Skeleton, TableSkeleton } from "../components/Skeleton.jsx";
+
+function wifiSignalIcon(percent) {
+  if (percent >= 65) return SignalHigh;
+  if (percent >= 35) return SignalMedium;
+  if (percent > 0) return SignalLow;
+  return SignalZero;
+}
+
+function SpeedTestSection() {
+  const [result, setResult] = useState(null);
+  const [testing, setTesting] = useState(false);
+  const toast = useToast();
+
+  async function runTest() {
+    setTesting(true);
+    setResult(null);
+    try {
+      const data = await call(window.api.network.runSpeedTest());
+      setResult(data);
+    } catch (err) {
+      toast.error(`Speed test failed: ${err.message}`);
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  return (
+    <section>
+      <h2 className="text-xl font-black mb-2 flex items-center gap-2">
+        <Gauge size={20} />
+        Speed Test
+      </h2>
+      <div className="card bg-base-200 max-w-2xl">
+        <div className="card-body">
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <Timer size={18} className="mx-auto opacity-60" />
+              <div className="text-xl font-black mt-1">{result ? `${result.pingMs}` : "-"}</div>
+              <div className="text-xs opacity-60">Ping (ms)</div>
+            </div>
+            <div>
+              <ArrowDown size={18} className="mx-auto opacity-60" />
+              <div className="text-xl font-black mt-1">{result ? result.downloadMbps : "-"}</div>
+              <div className="text-xs opacity-60">Download (Mbps)</div>
+            </div>
+            <div>
+              <ArrowUp size={18} className="mx-auto opacity-60" />
+              <div className="text-xl font-black mt-1">{result ? result.uploadMbps : "-"}</div>
+              <div className="text-xs opacity-60">Upload (Mbps)</div>
+            </div>
+          </div>
+          <button
+            className="btn btn-sm btn-primary w-fit mx-auto mt-3 gap-2 tooltip"
+            data-tip="Tests against Cloudflare's public speed test endpoint"
+            onClick={runTest}
+            disabled={testing}
+          >
+            {testing ? <span className="loading loading-spinner loading-xs"></span> : <Gauge size={14} />}
+            {testing ? "Testing..." : "Run Speed Test"}
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 const DNS_PRESETS = [
   { label: "Automatic (DHCP)", servers: [] },
@@ -162,6 +242,7 @@ export default function PowerNetwork() {
   const [tweaks, setTweaks] = useState([]);
   const [battery, setBattery] = useState(null);
   const [showBatteryPercent, setShowBatteryPercent] = useState(false);
+  const [wifiSignal, setWifiSignal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [resetConfirm, setResetConfirm] = useState(null); // "winsock" | "tcpip" | null
   const [dnsAdapter, setDnsAdapter] = useState(null);
@@ -170,18 +251,20 @@ export default function PowerNetwork() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [plansData, adaptersData, tweaksData, batteryData, showPercentData] = await Promise.all([
+      const [plansData, adaptersData, tweaksData, batteryData, showPercentData, wifiData] = await Promise.all([
         call(window.api.power.listPlans()),
         call(window.api.network.listAdapters()),
         call(window.api.tweaks.list()),
         call(window.api.power.getBatteryInfo()),
         call(window.api.power.getShowBatteryPercentage()),
+        call(window.api.network.getWifiSignal()),
       ]);
       setPlans(plansData);
       setAdapters(adaptersData);
       setTweaks(tweaksData);
       setBattery(batteryData);
       setShowBatteryPercent(showPercentData);
+      setWifiSignal(wifiData);
     } catch (err) {
       toast.error(`Failed to load power/network info: ${err.message}`);
     } finally {
@@ -342,10 +425,19 @@ export default function PowerNetwork() {
       <BatterySection battery={battery} showPercent={showBatteryPercent} onToggleShowPercent={handleToggleShowPercent} />
 
       <section>
-        <h2 className="text-xl font-black mb-2 flex items-center gap-2">
-          <Wifi size={20} />
-          Network Adapters
-        </h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-xl font-black flex items-center gap-2">
+            <Wifi size={20} />
+            Network Adapters
+          </h2>
+          {wifiSignal && wifiSignal.available && (
+            <div className="flex items-center gap-1.5 text-sm tooltip tooltip-left" data-tip={wifiSignal.radioType || undefined}>
+              {React.createElement(wifiSignalIcon(wifiSignal.signalPercent), { size: 16 })}
+              <span className="font-medium">{wifiSignal.signalPercent}%</span>
+              <span className="opacity-60">{wifiSignal.ssid}</span>
+            </div>
+          )}
+        </div>
         <div className="overflow-x-auto">
           <table className="table table-sm">
             <thead>
@@ -413,13 +505,17 @@ export default function PowerNetwork() {
         </div>
       </section>
 
+      <SpeedTestSection />
+
       <section>
         <h2 className="text-xl font-black mb-2 flex items-center gap-2">
           <SlidersHorizontal size={20} />
           Performance Tweaks
         </h2>
         <div className="space-y-2">
-          {tweaks.map((t) => (
+          {tweaks
+            .filter((t) => t.category === "performance")
+            .map((t) => (
             <label key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-base-200 cursor-pointer">
               <div>
                 <div className="font-medium">{t.label}</div>

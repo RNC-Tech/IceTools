@@ -15,4 +15,24 @@ function runCttWinUtil() {
   return { success: true };
 }
 
-module.exports = { runCttWinUtil };
+function runMassGraveActivation() {
+  const child = spawn(
+    "cmd.exe",
+    [
+      "/c",
+      "start",
+      "Mass Grave Activation",
+      "powershell.exe",
+      "-NoProfile",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-Command",
+      "irm https://get.activated.win | iex",
+    ],
+    { detached: true, stdio: "ignore", windowsHide: false }
+  );
+  child.unref();
+  return { success: true };
+}
+
+module.exports = { runCttWinUtil, runMassGraveActivation };

@@ -9,6 +9,7 @@ import { call } from "./api.js";
 export function useUpdater() {
   const [status, setStatus] = useState("idle");
   const [version, setVersion] = useState(null);
+  const [releaseNotes, setReleaseNotes] = useState(null);
   const [percent, setPercent] = useState(0);
   const [error, setError] = useState(null);
 
@@ -21,6 +22,7 @@ export function useUpdater() {
         case "available":
           setStatus("available");
           setVersion(event.version);
+          setReleaseNotes(event.releaseNotes || null);
           break;
         case "not-available":
           setStatus("up-to-date");
@@ -44,6 +46,7 @@ export function useUpdater() {
   return {
     status,
     version,
+    releaseNotes,
     percent,
     error,
     check: () => call(window.api.updater.check()),

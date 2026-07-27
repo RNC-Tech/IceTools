@@ -51,6 +51,53 @@ function CttWinUtilCard() {
   );
 }
 
+function MassGraveActivationCard() {
+  const [launching, setLaunching] = useState(false);
+  const toast = useToast();
+  const iconHover = useIconHover();
+
+  async function handleLaunch() {
+    setLaunching(true);
+    try {
+      await call(window.api.tools.runMassGraveActivation());
+      toast.success("Mass Grave Activation Script launched in a new window.");
+    } catch (err) {
+      toast.error(`Could not launch Mass Grave Activation Script: ${err.message}`);
+    } finally {
+      setLaunching(false);
+    }
+  }
+
+  return (
+    <div className="card bg-base-200">
+      <div className="card-body">
+        <h3 className="card-title text-base gap-2">
+          <Terminal size={18} />
+          Mass Grave Activation Script
+        </h3>
+        <p className="text-sm opacity-70">
+          Runs the Mass Grave Windows activation script in its own window. Review the prompts before applying
+          anything.
+        </p>
+        <div className="badge badge-warning badge-sm w-fit">Needs internet access</div>
+        <div className="card-actions justify-end mt-2">
+          <button
+            className="btn btn-primary btn-sm gap-2 tooltip tooltip-left"
+            data-tip="Opens the Mass Grave Activation Script in a separate window"
+            onClick={handleLaunch}
+            onMouseEnter={iconHover.onMouseEnter}
+            onMouseLeave={iconHover.onMouseLeave}
+            disabled={launching}
+          >
+            {launching ? <span className="loading loading-spinner loading-xs"></span> : <ExternalLink ref={iconHover.ref} size={14} />}
+            Launch
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function YtDlpLauncherCard() {
   const [opening, setOpening] = useState(false);
   const toast = useToast();
@@ -106,6 +153,7 @@ export default function ExtraTools() {
       <p className="text-sm opacity-60">Optional third-party utilities and helpers.</p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <CttWinUtilCard />
+        <MassGraveActivationCard />
         <YtDlpLauncherCard />
       </div>
     </div>

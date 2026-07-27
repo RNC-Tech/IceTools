@@ -7,6 +7,18 @@ function isSupported(app) {
   return app.isPackaged;
 }
 
+// electron-updater's GitHub provider returns the release body as a plain
+// string; other providers can return an array of {version, note} for
+// multiple intervening releases - normalize either shape down to one string.
+function normalizeReleaseNotes(notes) {
+  if (!notes) return null;
+  if (typeof notes === "string") return notes;
+  if (Array.isArray(notes)) {
+    return notes.map((n) => (typeof n === "string" ? n : n.note || "")).join("\n\n") || null;
+  }
+  return null;
+}
+
 function initUpdater(app, win) {
   if (!isSupported(app)) return;
 
@@ -18,7 +30,9 @@ function initUpdater(app, win) {
   };
 
   autoUpdater.on("checking-for-update", () => send({ type: "checking" }));
-  autoUpdater.on("update-available", (info) => send({ type: "available", version: info.version }));
+  autoUpdater.on("update-available", (info) =>
+    send({ type: "available", version: info.version, releaseNotes: normalizeReleaseNotes(info.releaseNotes) })
+  );
   autoUpdater.on("update-not-available", () => send({ type: "not-available" }));
   autoUpdater.on("download-progress", (progress) => send({ type: "progress", percent: Math.round(progress.percent) }));
   autoUpdater.on("update-downloaded", () => send({ type: "downloaded" }));

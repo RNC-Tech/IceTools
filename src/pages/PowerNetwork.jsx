@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Zap, Wifi, SlidersHorizontal } from "../components/icons/index.js";
 import {
   BatteryCharging,
@@ -15,7 +16,12 @@ import {
   SignalMedium,
   SignalLow,
   SignalZero,
+  CheckCircle2,
+  ExternalLink,
+  Zap as FastIcon,
+  X,
 } from "lucide-react";
+import PageHeader from "../components/PageHeader.jsx";
 import { call } from "../lib/api.js";
 import { useToast } from "../components/ToastProvider.jsx";
 import ConfirmModal from "../components/ConfirmModal.jsx";
@@ -28,9 +34,65 @@ function wifiSignalIcon(percent) {
   return SignalZero;
 }
 
+function SpeedTestWebModal({ modalUrl, title, onClose }) {
+  const toast = useToast();
+  if (!modalUrl) return null;
+
+  function handleExternalOpen() {
+    call(window.api.app.openExternal(modalUrl)).catch((err) => toast.error(err.message));
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 select-none">
+      <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md" onClick={onClose} />
+      <div className="relative z-10 glass-card bg-[#070f1e]/95 border border-blue-500/25 rounded-2xl w-full max-w-5xl h-[88vh] p-5 shadow-2xl text-white flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-blue-500/20 pb-3 shrink-0">
+          <div className="flex items-center gap-2">
+            <Gauge size={18} className="text-blue-400" />
+            <h3 className="font-bold text-base text-white">{title}</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              className="btn btn-xs btn-outline rounded-full px-3 gap-1 border-blue-500/30 text-blue-300 hover:text-white"
+              onClick={handleExternalOpen}
+              title="Open in default external browser"
+            >
+              <span>Open in Browser</span>
+              <ExternalLink size={10} />
+            </button>
+            <button className="btn btn-sm btn-ghost btn-circle text-slate-400 hover:text-white" onClick={onClose}>
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Embedded Electron Webview */}
+        <div className="flex-1 my-3 rounded-xl overflow-hidden border border-blue-500/20 bg-slate-950">
+          <webview
+            src={modalUrl}
+            className="w-full h-full border-none"
+            style={{ width: "100%", height: "100%" }}
+            allowpopups="true"
+          ></webview>
+        </div>
+
+        {/* Footer with Exit Button Below */}
+        <div className="pt-2 shrink-0 flex justify-end">
+          <button className="btn btn-sm btn-primary rounded-full px-6 font-bold shadow-lg shadow-blue-500/30" onClick={onClose}>
+            Exit Speed Test
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function SpeedTestSection() {
   const [result, setResult] = useState(null);
   const [testing, setTesting] = useState(false);
+  const [activeWebModal, setActiveWebModal] = useState(null); // { url, title }
   const toast = useToast();
 
   async function runTest() {
@@ -46,43 +108,85 @@ function SpeedTestSection() {
     }
   }
 
+  function handleOpenFastCom() {
+    call(window.api.app.openSpeedTestModal("https://fast.com", "Fast.com Speed Test (Netflix)")).catch(() => {
+      setActiveWebModal({ url: "https://fast.com", title: "Fast.com Speed Test (Netflix)" });
+    });
+  }
+
+  function handleOpenOokla() {
+    call(window.api.app.openSpeedTestModal("https://www.speedtest.net", "Ookla Speedtest.net")).catch(() => {
+      setActiveWebModal({ url: "https://www.speedtest.net", title: "Ookla Speedtest.net" });
+    });
+  }
+
   return (
-    <section>
-      <h2 className="text-xl font-black mb-2 flex items-center gap-2">
-        <Gauge size={20} />
-        Speed Test
-      </h2>
-      <div className="card bg-base-200 max-w-2xl">
-        <div className="card-body">
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <Timer size={18} className="mx-auto opacity-60" />
-              <div className="text-xl font-black mt-1">{result ? `${result.pingMs}` : "-"}</div>
-              <div className="text-xs opacity-60">Ping (ms)</div>
-            </div>
-            <div>
-              <ArrowDown size={18} className="mx-auto opacity-60" />
-              <div className="text-xl font-black mt-1">{result ? result.downloadMbps : "-"}</div>
-              <div className="text-xs opacity-60">Download (Mbps)</div>
-            </div>
-            <div>
-              <ArrowUp size={18} className="mx-auto opacity-60" />
-              <div className="text-xl font-black mt-1">{result ? result.uploadMbps : "-"}</div>
-              <div className="text-xs opacity-60">Upload (Mbps)</div>
-            </div>
+    <div className="glass-card rounded-2xl p-5 border border-blue-500/20 space-y-4 shadow-xl">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2">
+          <div className="p-2.5 rounded-xl bg-blue-500/15 text-blue-400 border border-blue-500/30">
+            <Gauge size={18} />
           </div>
+          <div>
+            <h3 className="font-bold text-base text-white">Network Speed Test</h3>
+            <p className="text-xs text-slate-400">Measure latency, download, and upload speeds or launch web providers</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
           <button
-            className="btn btn-sm btn-primary w-fit mx-auto mt-3 gap-2 tooltip"
-            data-tip="Tests against Cloudflare's public speed test endpoint"
+            className="btn btn-xs btn-outline rounded-full px-3.5 gap-1.5 border-blue-500/30 text-blue-300 hover:text-white"
+            onClick={handleOpenFastCom}
+            title="Open Fast.com speed test modal"
+          >
+            <FastIcon size={12} className="text-amber-400" />
+            <span>Fast.com</span>
+          </button>
+
+          <button
+            className="btn btn-xs btn-outline rounded-full px-3.5 gap-1.5 border-blue-500/30 text-blue-300 hover:text-white"
+            onClick={handleOpenOokla}
+            title="Open Speedtest.net speed test modal"
+          >
+            <Gauge size={12} className="text-emerald-400" />
+            <span>Speedtest.net</span>
+          </button>
+
+          <button
+            className="btn btn-sm btn-primary rounded-full px-5 gap-2 shadow-lg shadow-blue-500/30 font-bold"
             onClick={runTest}
             disabled={testing}
           >
-            {testing ? <span className="loading loading-spinner loading-xs"></span> : <Gauge size={14} />}
-            {testing ? "Testing..." : "Run Speed Test"}
+            {testing ? <span className="loading loading-spinner loading-xs"></span> : <Gauge size={15} />}
+            {testing ? "Testing Connection..." : "Run Speed Test"}
           </button>
         </div>
       </div>
-    </section>
+
+      <div className="grid grid-cols-3 gap-4 p-4 rounded-xl bg-slate-900/60 border border-blue-500/15 text-center">
+        <div>
+          <Timer size={18} className="mx-auto text-blue-400 mb-1" />
+          <div className="text-2xl font-black font-mono text-white">{result ? `${result.pingMs}` : "—"}</div>
+          <div className="text-xs text-slate-400">Ping (ms)</div>
+        </div>
+        <div>
+          <ArrowDown size={18} className="mx-auto text-emerald-400 mb-1" />
+          <div className="text-2xl font-black font-mono text-emerald-400">{result ? result.downloadMbps : "—"}</div>
+          <div className="text-xs text-slate-400">Download (Mbps)</div>
+        </div>
+        <div>
+          <ArrowUp size={18} className="mx-auto text-sky-400 mb-1" />
+          <div className="text-2xl font-black font-mono text-sky-400">{result ? result.uploadMbps : "—"}</div>
+          <div className="text-xs text-slate-400">Upload (Mbps)</div>
+        </div>
+      </div>
+
+      <SpeedTestWebModal
+        modalUrl={activeWebModal?.url}
+        title={activeWebModal?.title}
+        onClose={() => setActiveWebModal(null)}
+      />
+    </div>
   );
 }
 
@@ -106,46 +210,46 @@ function BatterySection({ battery, showPercent, onToggleShowPercent }) {
   const Icon = batteryIcon(battery.percent, battery.isCharging);
 
   return (
-    <section>
-      <h2 className="text-xl font-black mb-2 flex items-center gap-2">
-        <Icon size={20} />
-        Battery
-      </h2>
-      <div className="card bg-base-200 max-w-2xl">
-        <div className="card-body">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <div className="text-xs uppercase tracking-wide opacity-60">Charge</div>
-              <div className="text-xl font-black">{battery.percent}%</div>
-              <div className="text-xs opacity-60">{battery.isCharging ? "Charging" : battery.acConnected ? "Plugged in" : "On battery"}</div>
-            </div>
-            <div>
-              <div className="text-xs uppercase tracking-wide opacity-60">Health</div>
-              <div className="text-xl font-black">{battery.healthPercent !== null ? `${battery.healthPercent}%` : "N/A"}</div>
-              <div className="text-xs opacity-60">of designed capacity</div>
-            </div>
-            <div>
-              <div className="text-xs uppercase tracking-wide opacity-60">Model</div>
-              <div className="text-sm font-medium">{battery.model || "Unknown"}</div>
-              {battery.serial && <div className="text-xs opacity-60">S/N {battery.serial}</div>}
-            </div>
-            <div>
-              <div className="text-xs uppercase tracking-wide opacity-60">Cycle Count</div>
-              <div className="text-sm font-medium">{battery.cycleCount ?? "Unknown"}</div>
-            </div>
-          </div>
-          <label className="flex items-center justify-between pt-3 mt-3 border-t border-base-300 cursor-pointer">
-            <span className="text-sm">Show battery percentage in taskbar</span>
-            <input
-              type="checkbox"
-              className="toggle toggle-success"
-              checked={showPercent}
-              onChange={(e) => onToggleShowPercent(e.target.checked)}
-            />
-          </label>
+    <div className="glass-card rounded-2xl p-5 border border-blue-500/20 space-y-4 shadow-xl">
+      <div className="flex items-center gap-2">
+        <div className="p-2.5 rounded-xl bg-blue-500/15 text-blue-400 border border-blue-500/30">
+          <Icon size={18} />
+        </div>
+        <h3 className="font-bold text-base text-white">Laptop Battery & Power Health</h3>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="p-3.5 rounded-xl bg-slate-900/60 border border-blue-500/15">
+          <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Battery Charge</div>
+          <div className="text-2xl font-black font-mono text-blue-400">{battery.percent}%</div>
+          <div className="text-xs text-slate-400">{battery.isCharging ? "Charging" : battery.acConnected ? "Plugged in" : "On battery"}</div>
+        </div>
+        <div className="p-3.5 rounded-xl bg-slate-900/60 border border-blue-500/15">
+          <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Battery Health</div>
+          <div className="text-2xl font-black font-mono text-emerald-400">{battery.healthPercent !== null ? `${battery.healthPercent}%` : "N/A"}</div>
+          <div className="text-xs text-slate-400">Designed Capacity</div>
+        </div>
+        <div className="p-3.5 rounded-xl bg-slate-900/60 border border-blue-500/15">
+          <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Hardware Model</div>
+          <div className="text-sm font-bold text-white truncate">{battery.model || "Standard Battery"}</div>
+          {battery.serial && <div className="text-xs font-mono text-slate-400">S/N {battery.serial}</div>}
+        </div>
+        <div className="p-3.5 rounded-xl bg-slate-900/60 border border-blue-500/15">
+          <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Cycle Count</div>
+          <div className="text-2xl font-black font-mono text-white">{battery.cycleCount ?? "—"}</div>
         </div>
       </div>
-    </section>
+
+      <label className="flex items-center justify-between pt-3 border-t border-blue-500/15 cursor-pointer">
+        <span className="text-xs font-semibold text-slate-300">Show battery percentage in taskbar tray</span>
+        <input
+          type="checkbox"
+          className="toggle toggle-primary toggle-sm"
+          checked={showPercent}
+          onChange={(e) => onToggleShowPercent(e.target.checked)}
+        />
+      </label>
+    </div>
   );
 }
 
@@ -180,20 +284,24 @@ function DnsModal({ adapter, onClose, onApplied }) {
   }
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box">
-        <h3 className="font-black text-lg flex items-center gap-2">
-          <Globe size={18} />
-          DNS for {adapter.name}
-        </h3>
-        <p className="text-xs opacity-60 mt-1">
-          Current: {current === null ? "..." : current.length > 0 ? current.join(", ") : "Automatic (DHCP)"}
+    <div className="modal modal-open z-50">
+      <div className="modal-box glass-card border border-blue-500/20 rounded-2xl max-w-md bg-[#0b172a] text-white">
+        <div className="flex items-center justify-between border-b border-blue-500/20 pb-3">
+          <h3 className="font-bold text-base flex items-center gap-2 text-white">
+            <Globe size={18} className="text-blue-400" /> DNS Configuration for {adapter.name}
+          </h3>
+          <button className="btn btn-sm btn-ghost btn-circle text-slate-400 hover:text-white" onClick={onClose} disabled={applying}>✕</button>
+        </div>
+
+        <p className="text-xs text-slate-400 pt-3">
+          Current Servers: {current === null ? "..." : current.length > 0 ? current.join(", ") : "Automatic (DHCP)"}
         </p>
-        <div className="grid grid-cols-2 gap-2 py-4">
+
+        <div className="grid grid-cols-2 gap-2 py-3">
           {DNS_PRESETS.map((preset) => (
             <button
               key={preset.label}
-              className="btn btn-sm btn-outline"
+              className="btn btn-sm btn-outline rounded-xl text-xs border-blue-500/30 text-blue-300 hover:text-white"
               disabled={applying}
               onClick={() => apply(preset.servers)}
             >
@@ -201,37 +309,39 @@ function DnsModal({ adapter, onClose, onApplied }) {
             </button>
           ))}
         </div>
-        <div className="space-y-2">
-          <div className="text-xs font-medium opacity-70">Custom</div>
+
+        <div className="space-y-2 pt-2 border-t border-blue-500/20">
+          <div className="text-xs font-semibold text-slate-300">Custom DNS Servers</div>
           <input
-            className="input input-sm input-bordered w-full"
+            className="input input-sm input-bordered w-full rounded-xl bg-slate-900/60 border-blue-500/20 text-xs font-mono text-white placeholder:text-slate-500"
             placeholder="Primary DNS (e.g. 1.1.1.1)"
             value={customPrimary}
             onChange={(e) => setCustomPrimary(e.target.value)}
             disabled={applying}
           />
           <input
-            className="input input-sm input-bordered w-full"
-            placeholder="Secondary DNS (optional)"
+            className="input input-sm input-bordered w-full rounded-xl bg-slate-900/60 border-blue-500/20 text-xs font-mono text-white placeholder:text-slate-500"
+            placeholder="Secondary DNS (optional e.g. 1.0.0.1)"
             value={customSecondary}
             onChange={(e) => setCustomSecondary(e.target.value)}
             disabled={applying}
           />
           <button
-            className="btn btn-sm btn-primary w-full"
+            className="btn btn-sm btn-primary rounded-full w-full mt-1 font-bold"
             disabled={applying || !customPrimary.trim()}
             onClick={() => apply([customPrimary.trim(), customSecondary.trim()].filter(Boolean))}
           >
-            {applying ? <span className="loading loading-spinner loading-xs"></span> : "Apply Custom"}
+            {applying ? <span className="loading loading-spinner loading-xs"></span> : "Apply Custom DNS"}
           </button>
         </div>
-        <div className="modal-action">
-          <button className="btn" onClick={onClose} disabled={applying}>
+
+        <div className="modal-action border-t border-blue-500/20 pt-3">
+          <button className="btn btn-sm btn-ghost text-slate-300" onClick={onClose} disabled={applying}>
             Close
           </button>
         </div>
       </div>
-      <div className="modal-backdrop" onClick={applying ? undefined : onClose}></div>
+      <div className="modal-backdrop bg-black/60 backdrop-blur-sm" onClick={applying ? undefined : onClose}></div>
     </div>
   );
 }
@@ -244,7 +354,7 @@ export default function PowerNetwork() {
   const [showBatteryPercent, setShowBatteryPercent] = useState(false);
   const [wifiSignal, setWifiSignal] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [resetConfirm, setResetConfirm] = useState(null); // "winsock" | "tcpip" | null
+  const [resetConfirm, setResetConfirm] = useState(null);
   const [dnsAdapter, setDnsAdapter] = useState(null);
   const toast = useToast();
 
@@ -300,7 +410,7 @@ export default function PowerNetwork() {
     setShowBatteryPercent(enabled);
     try {
       await call(window.api.power.setShowBatteryPercentage(enabled));
-      toast.success(`Battery percentage ${enabled ? "shown" : "hidden"} in taskbar - sign out/in if it doesn't update immediately.`);
+      toast.success(`Battery percentage ${enabled ? "shown" : "hidden"} in taskbar.`);
     } catch (err) {
       setShowBatteryPercent(!enabled);
       toast.error(`Could not change setting: ${err.message}`);
@@ -320,7 +430,7 @@ export default function PowerNetwork() {
   async function flushDns() {
     try {
       await call(window.api.network.flushDns());
-      toast.success("DNS cache flushed");
+      toast.success("DNS cache flushed successfully!");
     } catch (err) {
       toast.error(`Flush DNS failed: ${err.message}`);
     }
@@ -348,196 +458,178 @@ export default function PowerNetwork() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-8">
-        <section>
-          <Skeleton className="h-7 w-40 mb-2" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="card bg-base-200">
-                <div className="card-body p-4 gap-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-6 w-16" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-        <section>
-          <Skeleton className="h-7 w-48 mb-2" />
-          <TableSkeleton rows={3} columns={5} />
-        </section>
-        <section>
-          <Skeleton className="h-7 w-56 mb-2" />
-          <div className="space-y-2">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-base-200">
-                <div className="space-y-1.5">
-                  <Skeleton className="h-4 w-40" />
-                  <Skeleton className="h-3 w-64" />
-                </div>
-                <Skeleton className="h-5 w-10" />
-              </div>
-            ))}
-          </div>
-        </section>
+      <div className="p-8 space-y-6">
+        <Skeleton className="h-8 w-64 rounded-xl" />
+        <Skeleton className="h-32 w-full rounded-2xl" />
+        <TableSkeleton rows={4} columns={5} />
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-8">
-      <section>
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xl font-black flex items-center gap-2">
-            <Zap size={20} />
-            Power Plans
-          </h2>
-          <button
-            className="btn btn-sm tooltip tooltip-left"
-            data-tip="Unlocks Windows' hidden max-performance power plan"
-            onClick={enableUltimate}
-          >
-            Add Ultimate Performance Plan
+    <div className="p-8 space-y-8">
+      <PageHeader
+        icon={Zap}
+        title="Power & Network"
+        description="Manage Windows power plans, adapter configurations, DNS presets, speed test diagnostics, and network tweaks."
+        badge="Power & Connectivity"
+      />
+
+      {/* Power Plans */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold tracking-tight uppercase text-slate-300 flex items-center gap-2">
+            <Zap size={16} className="text-blue-400" /> Power Profiles
+          </h3>
+          <button className="btn btn-xs btn-outline rounded-full px-3.5 border-blue-500/30 text-blue-300" onClick={enableUltimate}>
+            + Unlock Ultimate Performance
           </button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {plans.map((p) => (
-            <div key={p.guid} className={`card bg-base-200 ${p.active ? "ring-2 ring-primary" : ""}`}>
-              <div className="card-body p-4">
-                <div className="font-medium">{p.name}</div>
-                {p.active ? (
-                  <span className="badge badge-primary badge-sm w-fit">Active</span>
-                ) : (
-                  <button
-                    className="btn btn-xs btn-outline w-fit tooltip"
-                    data-tip="Switch to this power plan"
-                    onClick={() => activatePlan(p.guid)}
-                  >
-                    Activate
-                  </button>
-                )}
+            <div
+              key={p.guid}
+              className={`glass-card glass-card-hover rounded-2xl p-4 flex flex-col justify-between transition-all border ${
+                p.active ? "border-blue-500/50 bg-blue-500/10 shadow-md shadow-blue-500/10" : "border-blue-500/15"
+              }`}
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-sm text-white">{p.name}</span>
+                  {p.active && (
+                    <span className="badge badge-xs bg-blue-500/20 text-blue-300 border-blue-500/30 gap-1 font-semibold rounded-md px-2 py-1">
+                      <CheckCircle2 size={11} /> Active
+                    </span>
+                  )}
+                </div>
               </div>
+
+              {!p.active && (
+                <div className="pt-3 flex justify-end">
+                  <button className="btn btn-xs btn-outline rounded-full px-3 border-blue-500/30 text-blue-300" onClick={() => activatePlan(p.guid)}>
+                    Activate Profile
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
-      </section>
+      </div>
 
       <BatterySection battery={battery} showPercent={showBatteryPercent} onToggleShowPercent={handleToggleShowPercent} />
 
-      <section>
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xl font-black flex items-center gap-2">
-            <Wifi size={20} />
-            Network Adapters
-          </h2>
+      {/* Network Adapters */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold tracking-tight uppercase text-slate-300 flex items-center gap-2">
+            <Wifi size={16} className="text-blue-400" /> Network Adapters
+          </h3>
           {wifiSignal && wifiSignal.available && (
-            <div className="flex items-center gap-1.5 text-sm tooltip tooltip-left" data-tip={wifiSignal.radioType || undefined}>
-              {React.createElement(wifiSignalIcon(wifiSignal.signalPercent), { size: 16 })}
-              <span className="font-medium">{wifiSignal.signalPercent}%</span>
-              <span className="opacity-60">{wifiSignal.ssid}</span>
+            <div className="flex items-center gap-2 text-xs font-semibold text-blue-300 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/30">
+              {React.createElement(wifiSignalIcon(wifiSignal.signalPercent), { size: 14 })}
+              <span>{wifiSignal.ssid} ({wifiSignal.signalPercent}%)</span>
             </div>
           )}
         </div>
-        <div className="overflow-x-auto">
-          <table className="table table-sm">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Status</th>
-                <th>Link Speed</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {adapters.map((a) => (
-                <tr key={a.name}>
-                  <td className="font-medium">{a.name}</td>
-                  <td className="text-xs opacity-70">{a.description}</td>
-                  <td>
-                    <span className={`badge badge-sm ${a.status === "Up" ? "badge-success" : "badge-ghost"}`}>{a.status}</span>
-                  </td>
-                  <td className="text-xs">{a.linkSpeed}</td>
-                  <td className="flex gap-1">
-                    <button
-                      className="btn btn-xs btn-outline tooltip tooltip-left"
-                      data-tip="Change DNS servers for this adapter"
-                      onClick={() => setDnsAdapter(a)}
-                    >
-                      <Globe size={12} />
-                      DNS
-                    </button>
-                    <button
-                      className="btn btn-xs btn-outline tooltip tooltip-left"
-                      data-tip={a.status === "Up" ? "Disable this network adapter" : "Enable this network adapter"}
-                      onClick={() => toggleAdapter(a)}
-                    >
-                      {a.status === "Up" ? "Disable" : "Enable"}
-                    </button>
-                  </td>
+
+        <div className="glass-card rounded-2xl overflow-hidden border border-blue-500/15 shadow-xl">
+          <div className="overflow-x-auto max-h-[45vh]">
+            <table className="table table-sm w-full">
+              <thead className="bg-[#0b172a]/90 text-xs text-slate-300 sticky top-0 backdrop-blur-md border-b border-blue-500/20">
+                <tr>
+                  <th>Adapter Name</th>
+                  <th>Description</th>
+                  <th className="w-24 text-center">Status</th>
+                  <th className="w-32 text-center">Link Speed</th>
+                  <th className="w-36 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {adapters.map((a) => (
+                  <tr key={a.name} className="border-b border-white/5 hover:bg-blue-500/5 transition-colors">
+                    <td className="font-bold text-xs text-white">{a.name}</td>
+                    <td className="text-xs text-slate-400 truncate max-w-[220px]">{a.description}</td>
+                    <td className="text-center">
+                      <span
+                        className={`badge badge-xs font-semibold rounded-md px-2.5 py-1 ${
+                          a.status === "Up"
+                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                            : "bg-slate-800 text-slate-400 border border-slate-700"
+                        }`}
+                      >
+                        {a.status}
+                      </span>
+                    </td>
+                    <td className="text-center font-mono text-xs text-slate-400">{a.linkSpeed}</td>
+                    <td className="text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button className="btn btn-xs btn-outline rounded-full px-2.5 gap-1 border-blue-500/30 text-blue-300" onClick={() => setDnsAdapter(a)}>
+                          <Globe size={11} /> DNS
+                        </button>
+                        <button className="btn btn-xs btn-outline rounded-full px-2.5 gap-1 border-blue-500/30 text-slate-300" onClick={() => toggleAdapter(a)}>
+                          {a.status === "Up" ? "Disable" : "Enable"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div className="flex gap-2 mt-3">
-          <button
-            className="btn btn-sm tooltip"
-            data-tip="Clears the local DNS resolver cache"
-            onClick={flushDns}
-          >
-            Flush DNS
+
+        <div className="flex items-center gap-2 pt-1 flex-wrap">
+          <button className="btn btn-xs btn-primary rounded-full px-4 gap-1 shadow-sm font-bold" onClick={flushDns}>
+            Flush DNS Cache
           </button>
-          <button
-            className="btn btn-sm btn-outline tooltip"
-            data-tip="Resets the Winsock catalog to defaults - requires restart"
-            onClick={() => setResetConfirm("winsock")}
-          >
-            Reset Winsock
+          <button className="btn btn-xs btn-outline rounded-full px-4 border-blue-500/30 text-blue-300" onClick={() => setResetConfirm("winsock")}>
+            Reset Winsock Catalog
           </button>
-          <button
-            className="btn btn-sm btn-outline tooltip"
-            data-tip="Resets the TCP/IP stack to defaults - requires restart"
-            onClick={() => setResetConfirm("tcpip")}
-          >
-            Reset TCP/IP
+          <button className="btn btn-xs btn-outline rounded-full px-4 border-blue-500/30 text-blue-300" onClick={() => setResetConfirm("tcpip")}>
+            Reset TCP/IP Stack
           </button>
         </div>
-      </section>
+      </div>
 
       <SpeedTestSection />
 
-      <section>
-        <h2 className="text-xl font-black mb-2 flex items-center gap-2">
-          <SlidersHorizontal size={20} />
-          Performance Tweaks
-        </h2>
-        <div className="space-y-2">
+      {/* Tweaks */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-bold tracking-tight uppercase text-slate-300 flex items-center gap-2">
+          <SlidersHorizontal size={16} className="text-blue-400" /> Performance Tweaks
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {tweaks
             .filter((t) => t.category === "performance")
             .map((t) => (
-            <label key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-base-200 cursor-pointer">
-              <div>
-                <div className="font-medium">{t.label}</div>
-                <div className="text-xs opacity-50">{t.description}</div>
+              <div
+                key={t.id}
+                onClick={() => toggleTweak(t)}
+                className={`glass-card glass-card-hover rounded-2xl p-4 flex items-center justify-between cursor-pointer transition-all border ${
+                  t.enabled ? "border-blue-500/50 bg-blue-500/10" : "border-blue-500/15"
+                }`}
+              >
+                <div>
+                  <div className="font-bold text-xs text-white">{t.label}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{t.description}</div>
+                </div>
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary toggle-sm shrink-0 ml-3"
+                  checked={t.enabled}
+                  onChange={() => {}}
+                />
               </div>
-              <input
-                type="checkbox"
-                className="toggle toggle-success tooltip tooltip-left"
-                data-tip={t.enabled ? "Revert this tweak" : "Apply this tweak"}
-                checked={t.enabled}
-                onChange={() => toggleTweak(t)}
-              />
-            </label>
-          ))}
+            ))}
         </div>
-      </section>
+      </div>
 
       <ConfirmModal
         open={Boolean(resetConfirm)}
         title={resetConfirm === "winsock" ? "Reset Winsock catalog?" : "Reset TCP/IP stack?"}
-        message="This resets low-level networking settings to defaults and requires a restart to fully take effect. VPN/proxy configs may need to be reconfigured afterward."
-        confirmLabel="Reset"
+        message="This resets low-level Windows networking configurations to default state and requires a PC restart."
+        confirmLabel="Reset Stack"
         onConfirm={() => doReset(resetConfirm)}
         onCancel={() => setResetConfirm(null)}
       />

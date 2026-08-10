@@ -1,16 +1,34 @@
+const path = require("node:path");
+const fs = require("node:fs");
 const { nativeImage } = require("electron");
 
-// Builds the tray glyph in-memory as a raw BGRA buffer instead of bundling an
-// .ico/.png asset - a simple snowflake/asterisk clipped to a circle, in the
-// brand's Acc. Sage tone (#7FA3A0), which reads reasonably on both the
-// default dark and light Windows taskbars.
 function buildTrayIcon(size = 32) {
+  try {
+    const pngPath = path.join(__dirname, "..", "..", "public", "icon.png");
+    if (fs.existsSync(pngPath)) {
+      const img = nativeImage.createFromPath(pngPath);
+      if (!img.isEmpty()) return img.resize({ width: size, height: size });
+    }
+  } catch {
+    // fallback
+  }
+
+  try {
+    const svgPath = path.join(__dirname, "..", "..", "public", "icetools.svg");
+    if (fs.existsSync(svgPath)) {
+      const img = nativeImage.createFromPath(svgPath);
+      if (!img.isEmpty()) return img.resize({ width: size, height: size });
+    }
+  } catch {
+    // fallback to generated buffer
+  }
+
   const buffer = Buffer.alloc(size * size * 4);
   const center = (size - 1) / 2;
   const radius = center - 1;
   const armWidth = size <= 16 ? 1 : 1.6;
   const diagWidth = armWidth * 1.4;
-  const [r, g, b] = [0x7f, 0xa3, 0xa0];
+  const [r, g, b] = [0x3b, 0x82, 0xf6];
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {

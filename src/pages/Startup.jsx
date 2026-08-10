@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Rocket } from "../components/icons/index.js";
+import { Search, Rocket } from "lucide-react";
+import PageHeader from "../components/PageHeader.jsx";
 import AppIcon from "../components/AppIcon.jsx";
-import { Skeleton, TableSkeleton } from "../components/Skeleton.jsx";
+import { TableSkeleton } from "../components/Skeleton.jsx";
 import { call } from "../lib/api.js";
 import { useToast } from "../components/ToastProvider.jsx";
 
 export default function Startup() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const toast = useToast();
 
   const load = useCallback(async () => {
@@ -32,79 +34,108 @@ export default function Startup() {
       toast.success(`${!item.enabled ? "Enabled" : "Disabled"} "${item.name}"`);
       load();
     } catch (err) {
-      toast.error(`Could not toggle "${item.name}": ${err.message} (HKLM/all-users entries need admin)`);
+      toast.error(`Could not toggle "${item.name}": ${err.message} (HKLM entries require Admin)`);
     }
   }
 
-  if (loading) {
-    return (
-      <div className="p-6 space-y-4">
-        <Skeleton className="h-7 w-64" />
-        <Skeleton className="h-4 w-full max-w-2xl" />
-        <TableSkeleton rows={8} columns={4} />
-      </div>
-    );
-  }
+  const filtered = items.filter(
+    (i) => i.name.toLowerCase().includes(search.toLowerCase()) || i.command.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <div className="p-6 space-y-4">
-      <h2 className="text-xl font-black flex items-center gap-2">
-        <Rocket size={20} />
-        Startup Manager
-      </h2>
-      <p className="text-sm opacity-60">
-        Disabling an item removes it from the startup location and stores it so it can be re-enabled later - nothing is
-        deleted permanently.
-      </p>
+    <div className="p-8 space-y-6">
+      <PageHeader
+        icon={Rocket}
+        title="Startup Manager"
+        description="Control apps that launch automatically when Windows boots. Disabling unnecessary startup apps reduces boot times and frees RAM."
+        badge="Boot Accelerator"
+      />
 
-      <div className="overflow-x-auto">
-        <table className="table table-sm table-fixed w-full">
-          <thead>
-            <tr>
-              <th className="w-48">Name</th>
-              <th>Command / Path</th>
-              <th className="w-32">Origin</th>
-              <th className="w-20">Enabled</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id}>
-                <td className="font-medium truncate" title={item.name}>
-                  <div className="flex items-center gap-2">
-                    <AppIcon src={item.icon} />
-                    <span className="truncate">{item.name}</span>
-                  </div>
-                </td>
-                <td className="text-xs opacity-70">
-                  <div className="truncate" title={item.command}>
-                    {item.command}
-                  </div>
-                </td>
-                <td>
-                  <span className="badge badge-ghost badge-sm">{item.origin}</span>
-                </td>
-                <td>
-                  <input
-                    type="checkbox"
-                    className="toggle toggle-success toggle-sm tooltip tooltip-left"
-                    data-tip={item.enabled ? "Disable this startup item" : "Enable this startup item"}
-                    checked={item.enabled}
-                    onChange={() => handleToggle(item)}
-                  />
-                </td>
-              </tr>
-            ))}
-            {items.length === 0 && (
-              <tr>
-                <td colSpan={4} className="text-center opacity-60 py-6">
-                  No startup entries found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="relative w-full sm:w-80">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search startup apps or commands..."
+            className="input input-sm input-bordered w-full pl-9 rounded-xl bg-slate-900/60 border-blue-500/20 text-xs text-white placeholder:text-slate-500 focus:border-blue-500/50"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        <div className="flex items-center gap-2 text-xs text-slate-400">
+          <span className="font-bold text-blue-400">{items.filter((i) => i.enabled).length} Enabled</span>
+          <span>·</span>
+          <span>{items.filter((i) => !i.enabled).length} Disabled</span>
+        </div>
       </div>
+
+      {loading ? (
+        <TableSkeleton rows={6} columns={4} />
+      ) : (
+        <div className="glass-card rounded-2xl overflow-hidden border border-blue-500/15 shadow-xl">
+          <div className="overflow-x-auto max-h-[60vh]">
+            <table className="table table-sm w-full">
+              <thead className="bg-[#0b172a]/90 text-xs text-slate-300 sticky top-0 backdrop-blur-md border-b border-blue-500/20">
+                <tr>
+                  <th className="w-56">Application Name</th>
+                  <th>Command / File Path</th>
+                  <th className="w-36">Registry Origin</th>
+                  <th className="w-28 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((item) => (
+                  <tr key={item.id} className="border-b border-white/5 hover:bg-blue-500/5 transition-colors">
+                    <td>
+                      <div className="flex items-center gap-2.5">
+                        <AppIcon src={item.icon} />
+                        <span className="font-bold text-xs text-white truncate max-w-[180px]" title={item.name}>
+                          {item.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="font-mono text-xs text-slate-400">
+                      <div className="truncate max-w-[320px]" title={item.command}>
+                        {item.command}
+                      </div>
+                    </td>
+                    <td>
+                      <span className="badge badge-xs bg-slate-800 text-slate-300 border-blue-500/20 text-[10px] uppercase font-semibold rounded-md">
+                        {item.origin}
+                      </span>
+                    </td>
+                    <td className="text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <input
+                          type="checkbox"
+                          className="toggle toggle-primary toggle-sm"
+                          checked={item.enabled}
+                          onChange={() => handleToggle(item)}
+                        />
+                        <span
+                          className={`text-xs font-semibold ${
+                            item.enabled ? "text-blue-400 font-bold" : "text-slate-500"
+                          }`}
+                        >
+                          {item.enabled ? "Enabled" : "Disabled"}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="text-center py-8 text-xs text-slate-400">
+                      No startup entries match your search.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

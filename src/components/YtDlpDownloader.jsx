@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ListVideo, History, FolderOpen, Music, Video } from "lucide-react";
+import { ListVideo, History, FolderOpen, Music, Video, Clock, Maximize2, ImageOff, User, Trash2, FileX, Eraser } from "lucide-react";
 import { Download } from "./icons/index.js";
 import { call, formatBytes } from "../lib/api.js";
 import { useToast } from "./ToastProvider.jsx";
 import { useIconHover } from "../lib/useIconHover.js";
+import ConfirmModal from "./ConfirmModal.jsx";
 
 function formatOptionLabel(f) {
   const parts = [];
@@ -15,7 +16,12 @@ function formatOptionLabel(f) {
   return `${f.formatId} · ${parts.join(" · ")}`;
 }
 
+function isValidUrl(value) {
+  return /^https?:\/\//i.test(value || "");
+}
+
 function formatRelativeTime(isoString) {
+  if (!isoString) return "";
   const diffMs = Date.now() - new Date(isoString).getTime();
   const minutes = Math.floor(diffMs / 60000);
   if (minutes < 1) return "just now";
@@ -37,7 +43,11 @@ export default function YtDlpDownloader() {
   const [formats, setFormats] = useState(null);
   const [formatId, setFormatId] = useState("");
   const [fetchingFormats, setFetchingFormats] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [history, setHistory] = useState([]);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteMode, setDeleteMode] = useState("entryOnly"); // "entryOnly" | "fileAndEntry" | "clearAll"
   const toast = useToast();
   const downloadIconHover = useIconHover();
 
@@ -60,12 +70,29 @@ export default function YtDlpDownloader() {
     setFormatId("");
   }
 
+  useEffect(() => {
+    const trimmed = url.trim();
+    if (!isValidUrl(trimmed)) {
+      setPreview(null);
+      setPreviewLoading(false);
+      return;
+    }
+    setPreviewLoading(true);
+    const timer = setTimeout(() => {
+      call(window.api.ytdlp.getInfo(trimmed))
+        .then(setPreview)
+        .catch(() => setPreview(null))
+        .finally(() => setPreviewLoading(false));
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [url]);
+
   async function handleInstall() {
     setInstalling(true);
     try {
       await call(window.api.ytdlp.install());
       setInstalled(true);
-      toast.success("yt-dlp installed.");
+      toast.success("yt-dlp installed successfully.");
     } catch (err) {
       toast.error(`Failed to install yt-dlp: ${err.message}`);
     } finally {
@@ -75,7 +102,7 @@ export default function YtDlpDownloader() {
 
   async function handleCheckFormats() {
     if (!url.trim()) {
-      toast.error("Enter a URL first.");
+      toast.error("Enter a valid URL first.");
       return;
     }
     setFetchingFormats(true);
@@ -84,7 +111,7 @@ export default function YtDlpDownloader() {
     try {
       const result = await call(window.api.ytdlp.listFormats(url.trim()));
       if (result.formats.length === 0) {
-        toast.info("No selectable formats found for this URL - the automatic quality picker will be used.");
+        toast.info("No selectable formats found - automatic quality picker will be used.");
       }
       setFormats(result.formats);
     } catch (err) {
@@ -96,7 +123,7 @@ export default function YtDlpDownloader() {
 
   async function handleDownload() {
     if (!url.trim()) {
-      toast.error("Enter a URL first.");
+      toast.error("Enter a valid URL first.");
       return;
     }
     setDownloading(true);
@@ -107,8 +134,15 @@ export default function YtDlpDownloader() {
       setProgressLine(data.line || "");
     });
     try {
-      await call(window.api.ytdlp.download({ url: url.trim(), mode, formatId: formatId || undefined }));
-      toast.success("Download complete - saved to your Downloads folder.");
+      await call(
+        window.api.ytdlp.download({
+          url: url.trim(),
+          mode,
+          formatId: formatId || undefined,
+          thumbnailUrl: preview?.thumbnail || undefined,
+        })
+      );
+      toast.success("Download complete - saved to Downloads folder.");
       setUrl("");
       setFormats(null);
       setFormatId("");
@@ -127,83 +161,173 @@ export default function YtDlpDownloader() {
     try {
       await call(window.api.ytdlp.openHistoryItem(item.filePath));
     } catch (err) {
-      toast.error(`Could not open file: ${err.message}`);
+      toast.error(`Could not open folder: ${err.message}`);
+    }
+  }
+
+  async function handleConfirmDelete() {
+    if (deleteMode === "clearAll") {
+      try {
+        await call(window.api.ytdlp.clearHistory());
+        toast.success("Cleared all download history.");
+        loadHistory();
+      } catch (err) {
+        toast.error(`Could not clear history: ${err.message}`);
+      } finally {
+        setDeleteTarget(null);
+      }
+      return;
+    }
+
+    if (!deleteTarget) return;
+    try {
+      if (deleteMode === "fileAndEntry") {
+        await call(window.api.ytdlp.deleteFileAndHistoryItem(deleteTarget.id || deleteTarget.filePath, deleteTarget.filePath));
+        toast.success(`Deleted file and removed download entry.`);
+      } else {
+        await call(window.api.ytdlp.removeHistoryItem(deleteTarget.id || deleteTarget.filePath));
+        toast.success(`Removed download entry from history.`);
+      }
+      loadHistory();
+    } catch (err) {
+      toast.error(`Deletion failed: ${err.message}`);
+    } finally {
+      setDeleteTarget(null);
     }
   }
 
   const visibleFormats = (formats || []).filter((f) => (mode === "audio" ? !f.hasVideo : f.hasVideo));
 
   return (
-    <div className="card bg-base-200">
-      <div className="card-body">
-        <h3 className="card-title text-base gap-2">
-          <Download size={18} />
-          Video/Audio Downloader
+    <div className="space-y-6">
+      <div className="glass-card rounded-2xl p-6 border border-blue-500/20 space-y-4">
+        <h3 className="font-bold text-base text-white flex items-center gap-2">
+          <Download size={18} className="text-blue-400" /> Video & Audio Downloader
         </h3>
-        <p className="text-sm opacity-70">
-          Powered by{" "}
-          <button className="link link-hover" onClick={() => window.api.app.openExternal("https://github.com/yt-dlp/yt-dlp")}>
-            yt-dlp
-          </button>
-          . Only download content you have the right to save - respect creators' rights and each site's terms of
-          service.
-        </p>
 
         {installed === null ? (
-          <span className="loading loading-spinner loading-sm"></span>
+          <div className="flex justify-center p-4">
+            <span className="loading loading-spinner loading-md text-blue-400"></span>
+          </div>
         ) : !installed ? (
-          <div className="flex items-center gap-3">
-            <span className="text-sm opacity-70">yt-dlp isn't installed yet.</span>
-            <button className="btn btn-sm btn-primary" onClick={handleInstall} disabled={installing}>
-              {installing ? <span className="loading loading-spinner loading-xs"></span> : "Install yt-dlp"}
+          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-900/60 border border-blue-500/15">
+            <span className="text-xs font-medium text-slate-300">yt-dlp is required to download media files.</span>
+            <button className="btn btn-sm btn-primary rounded-full px-5" onClick={handleInstall} disabled={installing}>
+              {installing ? <span className="loading loading-spinner loading-xs"></span> : "Install yt-dlp Core"}
             </button>
           </div>
         ) : (
-          <div className="space-y-2">
-            <input
-              className="input input-sm input-bordered w-full"
-              placeholder="Paste a video URL..."
-              value={url}
-              onChange={handleUrlChange}
-              disabled={downloading}
-            />
-            <div className="flex items-center justify-between">
-              <div className="join">
+          <div className="space-y-4">
+            {(preview || previewLoading) && (
+              <div className="p-4 rounded-xl bg-slate-900/60 border border-blue-500/15 flex items-start gap-4">
+                <div className="w-44 aspect-video rounded-xl overflow-hidden border border-blue-500/20 bg-slate-950 shrink-0 flex items-center justify-center">
+                  {preview?.thumbnail ? (
+                    <img
+                      src={preview.thumbnail}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      onError={() => setPreview((p) => (p ? { ...p, thumbnail: null } : p))}
+                    />
+                  ) : previewLoading && !preview ? (
+                    <span className="loading loading-spinner loading-sm text-blue-400 opacity-60"></span>
+                  ) : (
+                    <ImageOff size={22} className="text-slate-600" />
+                  )}
+                </div>
+                {preview && (
+                  <div className="min-w-0 space-y-1 pt-0.5">
+                    <p className="text-xs font-bold text-white line-clamp-2">{preview.title || "Untitled Video"}</p>
+                    {preview.uploader && (
+                      <p className="text-xs text-slate-400 flex items-center gap-1">
+                        <User size={12} /> {preview.uploader}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-3 text-[11px] text-slate-400 pt-1">
+                      {preview.resolution && (
+                        <span className="flex items-center gap-1">
+                          <Maximize2 size={11} /> {preview.resolution}
+                        </span>
+                      )}
+                      {preview.duration && (
+                        <span className="flex items-center gap-1">
+                          <Clock size={11} /> {preview.duration}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <input
+                className="input input-bordered w-full rounded-xl bg-slate-900/60 border-blue-500/20 text-xs text-white font-mono placeholder:text-slate-500 focus:border-blue-500/50"
+                placeholder="Paste video URL (YouTube, Vimeo, Twitter, etc.)..."
+                value={url}
+                onChange={handleUrlChange}
+                disabled={downloading}
+              />
+            </div>
+
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-2">
                 <button
-                  className={`btn btn-xs join-item ${mode === "video" ? "btn-active" : ""}`}
+                  className={`btn btn-xs rounded-full px-3.5 ${mode === "video" ? "btn-primary" : "btn-ghost text-slate-300"}`}
                   onClick={() => {
                     setMode("video");
                     setFormatId("");
                   }}
                   disabled={downloading}
                 >
-                  Video
+                  <Video size={13} /> Video (MP4)
                 </button>
                 <button
-                  className={`btn btn-xs join-item ${mode === "audio" ? "btn-active" : ""}`}
+                  className={`btn btn-xs rounded-full px-3.5 ${mode === "audio" ? "btn-primary" : "btn-ghost text-slate-300"}`}
                   onClick={() => {
                     setMode("audio");
                     setFormatId("");
                   }}
                   disabled={downloading}
                 >
-                  Audio only
+                  <Music size={13} /> Audio Only (MP3)
                 </button>
               </div>
-              <button className="btn btn-xs btn-outline gap-1" onClick={handleCheckFormats} disabled={downloading || fetchingFormats}>
-                {fetchingFormats ? <span className="loading loading-spinner loading-xs"></span> : <ListVideo size={12} />}
-                Check formats
-              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  className="btn btn-xs btn-outline rounded-full px-3.5 gap-1 border-blue-500/30 text-blue-300"
+                  onClick={handleCheckFormats}
+                  disabled={downloading || fetchingFormats}
+                >
+                  {fetchingFormats ? <span className="loading loading-spinner loading-xs"></span> : <ListVideo size={13} />}
+                  Check Formats
+                </button>
+
+                <button
+                  className="btn btn-sm btn-primary rounded-full px-5 gap-2 shadow-lg shadow-blue-500/30 font-bold"
+                  onClick={handleDownload}
+                  onMouseEnter={downloadIconHover.onMouseEnter}
+                  onMouseLeave={downloadIconHover.onMouseLeave}
+                  disabled={downloading}
+                >
+                  {downloading ? (
+                    <span className="loading loading-spinner loading-xs"></span>
+                  ) : (
+                    <Download ref={downloadIconHover.ref} size={15} />
+                  )}
+                  Download Media
+                </button>
+              </div>
             </div>
 
             {formats && (
               <select
-                className="select select-sm select-bordered w-full"
+                className="select select-sm select-bordered w-full rounded-xl bg-slate-900/60 border-blue-500/20 text-xs text-slate-200 font-mono"
                 value={formatId}
                 onChange={(e) => setFormatId(e.target.value)}
                 disabled={downloading}
               >
-                <option value="">Auto (best {mode === "audio" ? "audio" : "video"})</option>
+                <option value="">Auto (Best Quality {mode === "audio" ? "Audio" : "Video"})</option>
                 {visibleFormats.map((f) => (
                   <option key={f.formatId} value={f.formatId}>
                     {formatOptionLabel(f)}
@@ -212,65 +336,130 @@ export default function YtDlpDownloader() {
               </select>
             )}
 
-            <div className="flex justify-end">
-              <button
-                className="btn btn-sm btn-primary gap-2"
-                onClick={handleDownload}
-                onMouseEnter={downloadIconHover.onMouseEnter}
-                onMouseLeave={downloadIconHover.onMouseLeave}
-                disabled={downloading}
-              >
-                {downloading ? <span className="loading loading-spinner loading-xs"></span> : <Download ref={downloadIconHover.ref} size={14} />}
-                Download
-              </button>
-            </div>
             {downloading && (
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs opacity-60">
-                  <span className="truncate">{progressLine}</span>
-                  <span className="shrink-0 ml-2">{progress ?? 0}%</span>
+              <div className="space-y-1.5 pt-2">
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+                  <span className="truncate max-w-[280px]">{progressLine}</span>
+                  <span className="font-mono text-blue-400">{progress ?? 0}%</span>
                 </div>
-                <progress className="progress progress-primary w-full" value={progress ?? 0} max="100"></progress>
-              </div>
-            )}
-
-            {history.length > 0 && (
-              <div className="pt-3 mt-2 border-t border-base-300 space-y-1.5">
-                <h4 className="text-xs font-medium opacity-60 flex items-center gap-1.5">
-                  <History size={13} />
-                  Recently Downloaded
-                </h4>
-                <div className="max-h-40 overflow-y-auto space-y-1">
-                  {history.slice(0, 8).map((item, i) => (
-                    <div key={i} className="flex items-center justify-between gap-2 text-xs bg-base-100 rounded-md px-2 py-1.5">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        {item.mode === "audio" ? (
-                          <Music size={12} className="shrink-0 opacity-60" />
-                        ) : (
-                          <Video size={12} className="shrink-0 opacity-60" />
-                        )}
-                        <span className="truncate" title={item.title}>
-                          {item.title}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="opacity-50">{formatRelativeTime(item.downloadedAt)}</span>
-                        <button
-                          className="btn btn-ghost btn-xs btn-circle"
-                          title="Show in folder"
-                          onClick={() => handleOpenHistoryItem(item)}
-                        >
-                          <FolderOpen size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <progress className="progress progress-primary w-full h-2 rounded-full" value={progress ?? 0} max="100"></progress>
               </div>
             )}
           </div>
         )}
       </div>
+
+      {history.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold tracking-tight uppercase text-slate-300 flex items-center gap-1.5">
+              <History size={14} className="text-blue-400" /> Download History ({history.length})
+            </h3>
+            <button
+              className="btn btn-xs btn-outline rounded-full px-3 text-slate-400 border-slate-700/60 hover:text-rose-400 hover:border-rose-500/40 flex items-center gap-1"
+              onClick={() => {
+                setDeleteTarget({ title: "All Download History" });
+                setDeleteMode("clearAll");
+              }}
+            >
+              <Eraser size={12} />
+              <span>Clear All History</span>
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            {history.map((item, i) => (
+              <div key={item.id || i} className="glass-card rounded-2xl p-3 flex items-center justify-between gap-3 border border-blue-500/15">
+                <div className="flex items-center gap-3 min-w-0">
+                  {item.thumbnailUrl ? (
+                    <img
+                      src={item.thumbnailUrl}
+                      alt=""
+                      className="w-12 h-12 rounded-xl object-cover border border-blue-500/20 shrink-0"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-xl bg-blue-500/15 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                      {item.mode === "audio" ? <Music size={18} /> : <Video size={18} />}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <span className="truncate text-xs font-bold text-white block" title={item.title}>
+                      {item.title}
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-mono block">
+                      {formatRelativeTime(item.downloadedAt)} · {item.mode === "audio" ? "Audio MP3" : "Video MP4"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    className="btn btn-ghost btn-xs rounded-lg gap-1 text-slate-300 hover:text-white"
+                    title="Show file in folder"
+                    onClick={() => handleOpenHistoryItem(item)}
+                  >
+                    <FolderOpen size={13} />
+                    <span className="hidden sm:inline">Folder</span>
+                  </button>
+
+                  <button
+                    className="btn btn-ghost btn-xs rounded-lg text-slate-400 hover:text-rose-400"
+                    title="Delete download entry from history"
+                    onClick={() => {
+                      setDeleteTarget(item);
+                      setDeleteMode("entryOnly");
+                    }}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+
+                  <button
+                    className="btn btn-ghost btn-xs rounded-lg text-slate-400 hover:text-rose-400"
+                    title="Delete file from disk and entry"
+                    onClick={() => {
+                      setDeleteTarget(item);
+                      setDeleteMode("fileAndEntry");
+                    }}
+                  >
+                    <FileX size={13} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <ConfirmModal
+        open={Boolean(deleteTarget)}
+        title={
+          deleteMode === "clearAll"
+            ? "Clear all download history?"
+            : deleteMode === "fileAndEntry"
+            ? "Delete file & entry?"
+            : "Delete history entry?"
+        }
+        message={
+          deleteMode === "clearAll"
+            ? "This clears all entries from your download history log. Files saved on disk will not be deleted."
+            : deleteMode === "fileAndEntry"
+            ? `Permanently delete "${deleteTarget?.title}" from disk AND remove entry from download history?`
+            : `Remove "${deleteTarget?.title}" from download history log? (File on disk will not be deleted).`
+        }
+        confirmLabel={
+          deleteMode === "clearAll"
+            ? "Clear All History"
+            : deleteMode === "fileAndEntry"
+            ? "Delete File & Entry"
+            : "Remove Entry"
+        }
+        danger={true}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

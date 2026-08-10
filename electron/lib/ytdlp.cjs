@@ -41,15 +41,28 @@ async function getHistory() {
   return readHistory();
 }
 
-async function openHistoryItem(filePath) {
-  if (!filePath) throw new Error("No file path");
-  try {
-    await fsp.access(filePath, fs.constants.F_OK);
-  } catch {
-    throw new Error("File no longer exists at that location");
-  }
-  shell.showItemInFolder(filePath);
+async function clearHistory() {
+  await fsp.writeFile(historyPath(), JSON.stringify([], null, 2));
   return { success: true };
+}
+
+async function removeHistoryItem(filePathOrId) {
+  const history = await readHistory();
+  const updated = history.filter((item) => item.filePath !== filePathOrId && item.id !== filePathOrId);
+  await fsp.writeFile(historyPath(), JSON.stringify(updated, null, 2));
+  return { success: true };
+}
+
+async function deleteFileAndHistoryItem(filePathOrId, filePath) {
+  const targetPath = filePath || filePathOrId;
+  if (targetPath) {
+    try {
+      await fsp.unlink(targetPath);
+    } catch {
+      // file might already be removed
+    }
+  }
+  return removeHistoryItem(filePathOrId);
 }
 
 async function isInstalled() {
@@ -156,6 +169,50 @@ function listFormats(url) {
   });
 }
 
+// Lightweight companion to listFormats() for the URL-paste preview card - a
+// handful of --print fields instead of a full --dump-json blob, since all
+// the UI needs here is title/thumbnail/uploader/resolution/duration, not the
+// full format list. Field order here must match the parsing order below.
+const INFO_FIELDS = ["%(title)s", "%(thumbnail)s", "%(uploader,channel,uploader_id)s", "%(resolution)s", "%(duration_string)s"];
+
+function getInfo(url) {
+  return new Promise((resolve, reject) => {
+    if (!isValidUrl(url)) {
+      reject(new Error("Enter a valid http(s) URL"));
+      return;
+    }
+
+    const printArgs = INFO_FIELDS.flatMap((field) => ["--print", field]);
+    const child = spawn(binaryPath(), ["--no-playlist", "--skip-download", ...printArgs, url], { windowsHide: true });
+    let stdout = "";
+    let stderrOutput = "";
+
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk.toString();
+    });
+    child.stderr.on("data", (chunk) => {
+      stderrOutput += chunk.toString();
+    });
+    child.on("error", reject);
+
+    child.on("close", (code) => {
+      if (code !== 0) {
+        reject(new Error(stderrOutput.trim().split(/\r?\n/).pop() || `yt-dlp exited with code ${code}`));
+        return;
+      }
+      const lines = stdout.trim().split(/\r?\n/);
+      const clean = (value) => (value && value !== "NA" ? value : null);
+      resolve({
+        title: clean(lines[0]) || "",
+        thumbnail: clean(lines[1]),
+        uploader: clean(lines[2]),
+        resolution: clean(lines[3]),
+        duration: clean(lines[4]),
+      });
+    });
+  });
+}
+
 function buildArgs(url, mode, formatId, outputTemplate) {
   // "b/best" and "ba/bestaudio" pick pre-muxed single-file formats, which
   // avoids needing ffmpeg on PATH to merge separate video/audio streams or
@@ -169,7 +226,7 @@ function buildArgs(url, mode, formatId, outputTemplate) {
   return [...formatArgs, "-o", outputTemplate, "--no-playlist", "--print", "after_move:filepath", url];
 }
 
-function download({ url, mode = "video", formatId, onProgress } = {}) {
+function download({ url, mode = "video", formatId, thumbnailUrl, onProgress } = {}) {
   return new Promise((resolve, reject) => {
     if (!isValidUrl(url)) {
       reject(new Error("Enter a valid http(s) URL"));
@@ -213,9 +270,17 @@ function download({ url, mode = "video", formatId, onProgress } = {}) {
 
       if (filePath) {
         try {
-          await appendHistory({ title, filePath, mode, url, downloadedAt: new Date().toISOString() });
+          await appendHistory({
+            id: Date.now().toString() + Math.random().toString(36).substring(2, 6),
+            title,
+            filePath,
+            mode,
+            url,
+            thumbnailUrl: thumbnailUrl || null,
+            downloadedAt: new Date().toISOString(),
+          });
         } catch {
-          // history is a convenience list, not critical - ignore write failures
+          // silent fallback
         }
       }
 
@@ -224,4 +289,20 @@ function download({ url, mode = "video", formatId, onProgress } = {}) {
   });
 }
 
-module.exports = { isInstalled, install, download, listFormats, getHistory, openHistoryItem };
+function openHistoryItem(filePath) {
+  if (filePath) shell.showItemInFolder(filePath);
+  return { success: true };
+}
+
+module.exports = {
+  isInstalled,
+  install,
+  download,
+  listFormats,
+  getInfo,
+  getHistory,
+  clearHistory,
+  openHistoryItem,
+  removeHistoryItem,
+  deleteFileAndHistoryItem,
+};

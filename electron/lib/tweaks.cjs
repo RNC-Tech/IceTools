@@ -1,4 +1,4 @@
-const { runPowerShell } = require("./exec.cjs");
+const { runPowerShell, runCommand } = require("./exec.cjs");
 
 // Small curated set of reversible registry tweaks. Each is defined by a fixed
 // (non-user-controlled) registry path/value, so no injection surface - but we
@@ -93,6 +93,54 @@ const TWEAKS = [
     requiresAdmin: false,
     category: "privacy",
   },
+  {
+    id: "disableConsumerFeatures",
+    label: "Disable Consumer Features",
+    description: "Stops Windows from auto-installing suggested apps and promotional content.",
+    regPath: "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent",
+    valueName: "DisableWindowsConsumerFeatures",
+    onValue: 1,
+    offValue: null,
+    requiresAdmin: true,
+    category: "privacy",
+  },
+  {
+    id: "removeWidgets",
+    label: "Remove Widgets",
+    description: "Hides the Widgets icon and panel from the taskbar.",
+    regPath: "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+    valueName: "TaskbarDa",
+    onValue: 0,
+    offValue: 1,
+    requiresAdmin: false,
+    category: "privacy",
+  },
+  {
+    id: "disableSuperfetch",
+    label: "Disable Superfetch",
+    description: "Stops and disables the SysMain service, which preloads apps into RAM in the background.",
+    kind: "service",
+    serviceName: "SysMain",
+    requiresAdmin: true,
+    category: "privacy",
+  },
+  {
+    id: "disableDeliveryOptimization",
+    label: "Disable Delivery Optimization",
+    description: "Stops and disables the service that shares Windows Update downloads with other PCs over your network.",
+    kind: "service",
+    serviceName: "DoSvc",
+    requiresAdmin: true,
+    category: "privacy",
+  },
+  {
+    id: "disableHibernate",
+    label: "Disable Hibernate",
+    description: "Turns off hibernation and deletes hiberfil.sys, freeing disk space equal to your installed RAM.",
+    kind: "hibernate",
+    requiresAdmin: true,
+    category: "privacy",
+  },
 ];
 
 async function readValue(regPath, valueName) {
@@ -107,17 +155,70 @@ async function readValue(regPath, valueName) {
   }
 }
 
+// Superfetch/DeliveryOptimization are services, not registry DWORDs - "applied"
+// means the service is disabled (and stopped), "reverted" restores it to
+// Automatic and starts it back up.
+async function readServiceDisabled(serviceName) {
+  try {
+    const out = await runPowerShell("(Get-Service -Name $env:ICE_SVC -ErrorAction Stop).StartType.ToString()", {
+      env: { ICE_SVC: serviceName },
+    });
+    return out.trim() === "Disabled";
+  } catch {
+    return null;
+  }
+}
+
+async function applyServiceDisabled(serviceName, enabled) {
+  if (enabled) {
+    await runPowerShell("Stop-Service -Name $env:ICE_SVC -Force -ErrorAction SilentlyContinue", {
+      env: { ICE_SVC: serviceName },
+    });
+    await runPowerShell("Set-Service -Name $env:ICE_SVC -StartupType Disabled -ErrorAction Stop", {
+      env: { ICE_SVC: serviceName },
+    });
+  } else {
+    await runPowerShell("Set-Service -Name $env:ICE_SVC -StartupType Automatic -ErrorAction Stop", {
+      env: { ICE_SVC: serviceName },
+    });
+    await runPowerShell("Start-Service -Name $env:ICE_SVC -ErrorAction SilentlyContinue", {
+      env: { ICE_SVC: serviceName },
+    });
+  }
+}
+
+// Hibernate has no plain registry toggle Microsoft supports - powercfg also
+// resizes/deletes hiberfil.sys, which a raw registry write wouldn't do.
+async function readHibernateEnabled() {
+  try {
+    const out = await runCommand("powercfg.exe", ["/a"]);
+    return !/Hibernation has not been enabled/i.test(out);
+  } catch {
+    return null;
+  }
+}
+
 async function list() {
   const results = [];
   for (const t of TWEAKS) {
-    const current = await readValue(t.regPath, t.valueName);
+    const kind = t.kind || "registry";
+    let enabled;
+    if (kind === "service") {
+      enabled = await readServiceDisabled(t.serviceName);
+    } else if (kind === "hibernate") {
+      const hibernateOn = await readHibernateEnabled();
+      enabled = hibernateOn === false;
+    } else {
+      const current = await readValue(t.regPath, t.valueName);
+      enabled = current === t.onValue;
+    }
     results.push({
       id: t.id,
       label: t.label,
       description: t.description,
       requiresAdmin: t.requiresAdmin,
       category: t.category,
-      enabled: current === t.onValue,
+      enabled: Boolean(enabled),
     });
   }
   return results;
@@ -126,6 +227,17 @@ async function list() {
 async function apply(id, enabled) {
   const t = TWEAKS.find((x) => x.id === id);
   if (!t) throw new Error("Unknown tweak");
+  const kind = t.kind || "registry";
+
+  if (kind === "service") {
+    await applyServiceDisabled(t.serviceName, enabled);
+    return { success: true };
+  }
+
+  if (kind === "hibernate") {
+    await runCommand("powercfg.exe", ["/hibernate", enabled ? "off" : "on"]);
+    return { success: true };
+  }
 
   if (enabled) {
     await runPowerShell(

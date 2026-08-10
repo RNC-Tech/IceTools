@@ -1,46 +1,39 @@
 import React, { useEffect, useState } from "react";
-import { Rocket, Palette, PictureInPicture2, RefreshCw } from "lucide-react";
+import { Rocket, PictureInPicture2, RefreshCw } from "lucide-react";
 import { SlidersHorizontal } from "../components/icons/index.js";
-import AnimatedIcon from "../components/AnimatedIcon.jsx";
+import PageHeader from "../components/PageHeader.jsx";
 import { Skeleton } from "../components/Skeleton.jsx";
 import { call } from "../lib/api.js";
 import { useToast } from "../components/ToastProvider.jsx";
-import { useTheme, LIGHT_THEME, DARK_THEME, SYSTEM_MODE } from "../lib/useTheme.js";
 
-const THEME_OPTIONS = [
-  { value: SYSTEM_MODE, label: "System" },
-  { value: LIGHT_THEME, label: "Light" },
-  { value: DARK_THEME, label: "Dark" },
-];
-
-function SettingRow({ title, description, checked, onChange, tip }) {
+function SettingRow({ title, description, checked, onChange }) {
   return (
-    <label className="flex items-center justify-between p-3 rounded-lg bg-base-200 cursor-pointer gap-4">
+    <div
+      onClick={() => onChange(!checked)}
+      className="glass-card glass-card-hover rounded-2xl p-4 flex items-center justify-between cursor-pointer border border-blue-500/15 transition-all"
+    >
       <div>
-        <div className="font-medium">{title}</div>
-        <div className="text-xs opacity-50">{description}</div>
+        <div className="font-bold text-xs text-white">{title}</div>
+        <div className="text-xs text-slate-400 mt-0.5">{description}</div>
       </div>
       <input
         type="checkbox"
-        className="toggle toggle-success tooltip tooltip-left shrink-0"
-        data-tip={tip}
+        className="toggle toggle-primary toggle-sm shrink-0 ml-3"
         checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
+        onChange={() => {}}
       />
-    </label>
+    </div>
   );
 }
 
 export default function Settings() {
   const [settings, setSettings] = useState(null);
   const toast = useToast();
-  const { mode, setMode } = useTheme();
 
   useEffect(() => {
     call(window.api.settings.get())
       .then(setSettings)
       .catch((err) => toast.error(`Failed to load settings: ${err.message}`));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function updateSetting(key, value) {
@@ -57,96 +50,66 @@ export default function Settings() {
 
   if (!settings) {
     return (
-      <div className="p-6 space-y-6">
-        <Skeleton className="h-7 w-40" />
-        <Skeleton className="h-16 w-full" />
-        <Skeleton className="h-16 w-full" />
-        <Skeleton className="h-16 w-full" />
+      <div className="p-8 space-y-6">
+        <Skeleton className="h-8 w-48 rounded-xl" />
+        <Skeleton className="h-20 w-full rounded-2xl" />
+        <Skeleton className="h-20 w-full rounded-2xl" />
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-2xl">
-      <h2 className="text-xl font-black flex items-center gap-2">
-        <SlidersHorizontal size={20} />
-        Settings
-      </h2>
+    <div className="p-8 space-y-8 max-w-3xl">
+      <PageHeader
+        icon={SlidersHorizontal}
+        title="Application Settings"
+        description="Configure startup behavior, system tray options, and auto-update checks."
+        badge="Preferences"
+      />
 
-      <section>
-        <h3 className="text-sm font-medium opacity-70 mb-2 flex items-center gap-1.5">
-          <AnimatedIcon icon={Rocket} size={16} />
-          Startup
+      <div className="space-y-4">
+        <h3 className="text-sm font-bold tracking-tight uppercase text-slate-300 flex items-center gap-2">
+          <Rocket size={16} className="text-blue-400" /> Windows Startup
         </h3>
         <SettingRow
-          title="Run IceTools at Windows startup"
-          description="Launches IceTools automatically when you sign in to Windows."
+          title="Run IceTools at Windows Startup"
+          description="Launches IceTools automatically when you log into Windows."
           checked={settings.runAtStartup}
-          tip={settings.runAtStartup ? "Disable auto-start" : "Enable auto-start"}
           onChange={(value) => updateSetting("runAtStartup", value)}
         />
-      </section>
+      </div>
 
-      <section>
-        <h3 className="text-sm font-medium opacity-70 mb-2 flex items-center gap-1.5">
-          <AnimatedIcon icon={Palette} size={16} />
-          Appearance
+      <div className="space-y-4">
+        <h3 className="text-sm font-bold tracking-tight uppercase text-slate-300 flex items-center gap-2">
+          <PictureInPicture2 size={16} className="text-blue-400" /> System Tray Integration
         </h3>
-        <div className="flex items-center justify-between p-3 rounded-lg bg-base-200">
-          <div>
-            <div className="font-medium">Default theme</div>
-            <div className="text-xs opacity-50">"System" follows your Windows light/dark setting automatically.</div>
-          </div>
-          <div className="join shrink-0">
-            {THEME_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                className={`btn btn-xs join-item ${mode === opt.value ? "btn-active" : ""}`}
-                onClick={() => setMode(opt.value)}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <h3 className="text-sm font-medium opacity-70 mb-2 flex items-center gap-1.5">
-          <AnimatedIcon icon={PictureInPicture2} size={16} />
-          System Tray
-        </h3>
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <SettingRow
-            title="Minimize to tray"
-            description="Clicking the minimize button hides IceTools to the system tray instead of the taskbar."
+            title="Minimize to System Tray"
+            description="Minimizing hides IceTools to the Windows system tray."
             checked={settings.minimizeToTray}
-            tip={settings.minimizeToTray ? "Minimize to taskbar instead" : "Minimize to tray instead"}
             onChange={(value) => updateSetting("minimizeToTray", value)}
           />
           <SettingRow
-            title="Close to tray"
-            description="Clicking the close button hides IceTools to the system tray instead of quitting."
+            title="Close to System Tray"
+            description="Closing the window keeps IceTools running in the tray."
             checked={settings.closeToTray}
-            tip={settings.closeToTray ? "Quit on close instead" : "Keep running in tray on close"}
             onChange={(value) => updateSetting("closeToTray", value)}
           />
         </div>
-      </section>
+      </div>
 
-      <section>
-        <h3 className="text-sm font-medium opacity-70 mb-2 flex items-center gap-1.5">
-          <AnimatedIcon icon={RefreshCw} size={16} />
-          Updates
+      <div className="space-y-4">
+        <h3 className="text-sm font-bold tracking-tight uppercase text-slate-300 flex items-center gap-2">
+          <RefreshCw size={16} className="text-blue-400" /> Automatic Updates
         </h3>
         <SettingRow
-          title="Automatically check for updates"
-          description="Checks GitHub Releases for a newer version shortly after IceTools starts."
+          title="Automatically Check for Updates"
+          description="Checks GitHub Releases for new IceTools versions on launch."
           checked={settings.autoCheckUpdates}
-          tip={settings.autoCheckUpdates ? "Disable auto-check" : "Enable auto-check"}
           onChange={(value) => updateSetting("autoCheckUpdates", value)}
         />
-      </section>
+      </div>
     </div>
   );
 }

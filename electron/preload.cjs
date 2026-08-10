@@ -5,12 +5,18 @@ function invoke(channel) {
 }
 
 contextBridge.exposeInMainWorld("api", {
+  window: {
+    minimize: invoke("window:minimize"),
+    maximize: invoke("window:maximize"),
+    close: invoke("window:close"),
+  },
   app: {
     isAdmin: invoke("app:isAdmin"),
     getVersion: invoke("app:getVersion"),
     relaunchAsAdmin: invoke("app:relaunchAsAdmin"),
-    openExternal: invoke("app:openExternal"),
     showMainWindow: invoke("app:showMainWindow"),
+    openExternal: invoke("app:openExternal"),
+    openSpeedTestModal: invoke("app:openSpeedTestModal"),
     platform: process.platform,
   },
   system: {
@@ -81,15 +87,18 @@ contextBridge.exposeInMainWorld("api", {
   tools: {
     runCttWinUtil: invoke("tools:runCttWinUtil"),
     runMassGraveActivation: invoke("tools:runMassGraveActivation"),
-    openDownloaderWindow: invoke("tools:openDownloaderWindow"),
   },
   ytdlp: {
     isInstalled: invoke("ytdlp:isInstalled"),
     install: invoke("ytdlp:install"),
     listFormats: invoke("ytdlp:listFormats"),
+    getInfo: invoke("ytdlp:getInfo"),
     download: invoke("ytdlp:download"),
     getHistory: invoke("ytdlp:getHistory"),
+    clearHistory: invoke("ytdlp:clearHistory"),
     openHistoryItem: invoke("ytdlp:openHistoryItem"),
+    removeHistoryItem: invoke("ytdlp:removeHistoryItem"),
+    deleteFileAndHistoryItem: invoke("ytdlp:deleteFileAndHistoryItem"),
     onProgress: (callback) => {
       const listener = (_event, data) => callback(data);
       ipcRenderer.on("ytdlp:progress", listener);

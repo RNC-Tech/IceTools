@@ -7,3 +7,12 @@ Future Updates.txt
 # build.directories.output) so Cursor's workspace/indexer never touches it -
 # this entry is just a safety net in case anything ever writes here again.
 release/
+
+# Agent skills, IDE metadata, and temporary folders
+.agents/
+.claude/
+.temp_agentic_awesome_skills/
+
+# Ignore markdown documentation & skill files (keep README.md tracked)
+*.md
+!README.md

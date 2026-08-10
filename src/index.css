@@ -10,28 +10,215 @@ body,
   height: 100%;
 }
 
-/* No window in this app should ever show a native OS scrollbar - any page
-   that needs to scroll does so via its own explicit overflow-y-auto
-   container. Without this, DaisyUI's .toast (position: fixed, rendered
-   unconditionally by ToastProvider even with zero toasts) can push the
-   document's own scrollable area past the viewport in small frameless
-   windows like the tray widget, showing a spurious scrollbar. */
 html,
 body {
   overflow: hidden;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
-/* DaisyUI's .btn sets flex-wrap: wrap by default, which stacks an icon above
-   its label onto two lines whenever the button's content is wider than its
-   rendered width - every icon+label button in this app is meant to stay on
-   one line, growing/shrinking in width instead.
-   DaisyUI's .tooltip also sets display: inline-block, and since .tooltip's
-   rules come after .btn's in the generated stylesheet, any button that's
-   also a tooltip trigger (btn + tooltip on the same element) loses its
-   inline-flex layout entirely - dropping the icon (a block-level element)
-   onto its own line above the label. Restoring display here fixes that. */
+/* Pill Button Overrides */
 .btn {
   display: inline-flex;
   flex-wrap: nowrap;
   white-space: nowrap;
+  border-radius: 9999px !important;
+  font-weight: 600;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #0284c7 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  font-weight: 700 !important;
+  box-shadow: 0 8px 24px -4px rgba(59, 130, 246, 0.45) !important;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #60a5fa 0%, #0369a1 100%) !important;
+  box-shadow: 0 12px 28px -4px rgba(59, 130, 246, 0.6) !important;
+  transform: translateY(-1px) scale(1.02);
+}
+
+.btn-outline {
+  background-color: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+  color: #f8fafc !important;
+}
+
+.btn-outline:hover {
+  background-color: rgba(30, 41, 59, 0.8) !important;
+  border-color: rgba(96, 165, 250, 0.6) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+/* Electric Cyber-Sapphire Dark & Light Themes */
+.app-bg-gradient {
+  background: radial-gradient(ellipse at 85% 0%, rgba(59, 130, 246, 0.28) 0%, transparent 60%),
+              radial-gradient(ellipse at 15% 100%, rgba(14, 165, 233, 0.15) 0%, transparent 55%),
+              linear-gradient(180deg, #050b14 0%, #0b172a 100%);
+  color: #f8fafc;
+}
+
+[data-theme="light"] {
+  color: #0f172a;
+}
+
+[data-theme="light"] .app-bg-gradient {
+  background: radial-gradient(ellipse at 85% 0%, rgba(59, 130, 246, 0.12) 0%, transparent 60%),
+              radial-gradient(ellipse at 15% 100%, rgba(14, 165, 233, 0.08) 0%, transparent 55%),
+              linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  color: #0f172a;
+}
+
+.glass-card {
+  background: rgba(11, 21, 40, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  border-radius: 1.25rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="light"] .glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  box-shadow: 0 4px 20px rgba(148, 163, 184, 0.12);
+  color: #0f172a;
+}
+
+[data-theme="light"] .text-white,
+[data-theme="light"] .text-slate-100,
+[data-theme="light"] .text-slate-200,
+[data-theme="light"] .text-slate-300 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .text-slate-400,
+[data-theme="light"] .text-slate-500 {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .btn-outline {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(203, 213, 225, 0.9) !important;
+  color: #1e293b !important;
+}
+
+.glass-card-hover:hover {
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 14px 36px -10px rgba(59, 130, 246, 0.25);
+  transform: translateY(-2px);
+}
+
+.active-cyan-pill {
+  background: linear-gradient(135deg, #3b82f6 0%, #0284c7 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  font-weight: 700 !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4) !important;
+}
+
+/* Progress Bar Color Overrides */
+progress {
+  accent-color: #3b82f6;
+  background-color: rgba(30, 41, 59, 0.6);
+  border-radius: 9999px;
+}
+
+progress::-webkit-progress-bar {
+  background-color: rgba(30, 41, 59, 0.6);
+  border-radius: 9999px;
+}
+
+progress::-webkit-progress-value {
+  background-color: #3b82f6 !important;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+progress::-moz-progress-bar {
+  background-color: #3b82f6 !important;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+progress.progress-primary::-webkit-progress-value {
+  background-color: #3b82f6 !important;
+}
+
+progress.progress-warning::-webkit-progress-value {
+  background-color: #f59e0b !important;
+}
+
+progress.progress-error::-webkit-progress-value {
+  background-color: #f43f5e !important;
+}
+
+progress.progress-success::-webkit-progress-value {
+  background-color: #10b981 !important;
+}
+
+/* Badge & Chip Color Overrides */
+.badge-success {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+  color: #34d399 !important;
+}
+
+.badge-warning {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+  color: #fbbf24 !important;
+}
+
+.badge-error {
+  background-color: rgba(244, 63, 94, 0.15) !important;
+  border: 1px solid rgba(244, 63, 94, 0.35) !important;
+  color: #f87171 !important;
+}
+
+/* Custom Checkbox & Toggle Overrides */
+.checkbox-primary:checked {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+}
+
+.toggle-primary:checked {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+}
+
+/* Electron Window Drag Regions */
+.window-drag-region {
+  -webkit-app-region: drag;
+}
+
+.window-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.6);
 }

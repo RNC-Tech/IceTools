@@ -4,8 +4,8 @@ import { motion } from "motion/react";
 export function Skeleton({ className = "" }) {
   return (
     <motion.div
-      className={`bg-base-300 rounded-md ${className}`}
-      animate={{ opacity: [0.5, 1, 0.5] }}
+      className={`bg-[#0b172a]/80 border border-blue-500/10 rounded-xl ${className}`}
+      animate={{ opacity: [0.4, 0.85, 0.4] }}
       transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
     />
   );
@@ -29,13 +29,11 @@ export function TableSkeleton({ rows = 8, columns = 4 }) {
 /** Shimmering placeholder shaped like a StatCard, for dashboard-style stat grids. */
 export function StatCardSkeleton() {
   return (
-    <div className="card bg-base-200 shadow-sm">
-      <div className="card-body p-4 gap-2">
-        <Skeleton className="h-3 w-20" />
-        <Skeleton className="h-7 w-16" />
-        <Skeleton className="h-3 w-32" />
-        <Skeleton className="h-2 w-full" />
-      </div>
+    <div className="glass-card rounded-2xl p-5 border border-blue-500/15 space-y-3">
+      <Skeleton className="h-3 w-20" />
+      <Skeleton className="h-9 w-24" />
+      <Skeleton className="h-3 w-36" />
+      <Skeleton className="h-2 w-full" />
     </div>
   );
 }

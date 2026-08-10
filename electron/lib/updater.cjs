@@ -1,15 +1,10 @@
 const { autoUpdater } = require("electron-updater");
+const https = require("node:https");
 
-// electron-updater only makes sense in a packaged, installed (NSIS) build -
-// there's no update artifact to compare against when running from source via
-// `npm run dev`, and it would just log noisy errors trying.
 function isSupported(app) {
   return app.isPackaged;
 }
 
-// electron-updater's GitHub provider returns the release body as a plain
-// string; other providers can return an array of {version, note} for
-// multiple intervening releases - normalize either shape down to one string.
 function normalizeReleaseNotes(notes) {
   if (!notes) return null;
   if (typeof notes === "string") return notes;
@@ -22,11 +17,11 @@ function normalizeReleaseNotes(notes) {
 function initUpdater(app, win) {
   if (!isSupported(app)) return;
 
-  autoUpdater.autoDownload = false; // ask before pulling down a potentially large installer
+  autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = false;
 
   const send = (payload) => {
-    if (!win.isDestroyed()) win.webContents.send("updater:event", payload);
+    if (win && !win.isDestroyed()) win.webContents.send("updater:event", payload);
   };
 
   autoUpdater.on("checking-for-update", () => send({ type: "checking" }));
@@ -39,10 +34,70 @@ function initUpdater(app, win) {
   autoUpdater.on("error", (err) => send({ type: "error", message: err.message }));
 }
 
-async function checkForUpdates(app) {
-  if (!isSupported(app)) return { success: false, reason: "not-packaged" };
-  await autoUpdater.checkForUpdates();
-  return { success: true };
+function fetchLatestGitHubRelease(repo = "RNC-Tech/IceTools") {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: "api.github.com",
+      path: `/repos/${repo}/releases/latest`,
+      headers: { "User-Agent": "IceTools-App" },
+    };
+
+    https.get(options, (res) => {
+      let data = "";
+      res.on("data", (chunk) => (data += chunk));
+      res.on("end", () => {
+        if (res.statusCode === 200) {
+          try {
+            resolve(JSON.parse(data));
+          } catch (e) {
+            reject(new Error("Failed to parse release info"));
+          }
+        } else if (res.statusCode === 404) {
+          resolve(null); // No releases published yet
+        } else {
+          reject(new Error(`GitHub API HTTP ${res.statusCode}`));
+        }
+      });
+    }).on("error", reject);
+  });
+}
+
+async function checkForUpdates(app, win) {
+  if (app.isPackaged) {
+    await autoUpdater.checkForUpdates();
+    return { success: true };
+  }
+
+  // Dev/Unpackaged mode fallback check via GitHub API
+  if (win && !win.isDestroyed()) win.webContents.send("updater:event", { type: "checking" });
+
+  try {
+    const latest = await fetchLatestGitHubRelease();
+    if (!latest) {
+      if (win && !win.isDestroyed()) win.webContents.send("updater:event", { type: "not-available" });
+      return { success: true, message: "No releases found on GitHub yet." };
+    }
+
+    const currentVersion = app.getVersion().replace(/^v/, "");
+    const latestVersion = (latest.tag_name || "").replace(/^v/, "");
+
+    if (latestVersion && latestVersion !== currentVersion) {
+      if (win && !win.isDestroyed()) {
+        win.webContents.send("updater:event", {
+          type: "available",
+          version: latestVersion,
+          releaseNotes: latest.body || "A new update is available on GitHub Releases.",
+          url: latest.html_url,
+        });
+      }
+    } else {
+      if (win && !win.isDestroyed()) win.webContents.send("updater:event", { type: "not-available" });
+    }
+    return { success: true };
+  } catch (err) {
+    if (win && !win.isDestroyed()) win.webContents.send("updater:event", { type: "error", message: err.message });
+    return { success: false, error: err.message };
+  }
 }
 
 async function downloadUpdate(app) {

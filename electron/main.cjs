@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, Tray, Menu, screen } = require("electron");
+const { app, BrowserWindow, ipcMain, Tray, Menu, screen } = require("electron");
 const path = require("node:path");
 
 const isDev = process.env.NODE_ENV === "development";
@@ -46,22 +46,55 @@ function wrap(fn) {
   };
 }
 
-// Fixed allowlist, not an arbitrary-URL-open primitive - keeps this handler
-// from becoming a way for renderer-side code to make the app open anything.
-const ALLOWED_EXTERNAL_URLS = new Set(["https://github.com/yt-dlp/yt-dlp"]);
-
 function registerIpc() {
   ipcMain.handle("app:isAdmin", wrap(() => isAdmin()));
   ipcMain.handle("app:getVersion", wrap(() => app.getVersion()));
   ipcMain.handle("app:relaunchAsAdmin", wrap(() => relaunchAsAdmin()));
-  ipcMain.handle(
-    "app:openExternal",
-    wrap((url) => {
-      if (!ALLOWED_EXTERNAL_URLS.has(url)) throw new Error("URL not allowed");
-      return shell.openExternal(url);
-    })
-  );
   ipcMain.handle("app:showMainWindow", wrap(() => showMainWindow()));
+  ipcMain.handle("app:openExternal", wrap(async (url) => {
+    if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
+      await shell.openExternal(url);
+      return true;
+    }
+    throw new Error("Invalid URL");
+  }));
+  ipcMain.handle("app:openSpeedTestModal", wrap(async (url, title = "Speed Test") => {
+    let speedWin = new BrowserWindow({
+      parent: mainWindow && !mainWindow.isDestroyed() ? mainWindow : undefined,
+      modal: true,
+      width: 1080,
+      height: 760,
+      minWidth: 800,
+      minHeight: 600,
+      backgroundColor: "#050B14",
+      frame: true,
+      title: title,
+      icon: path.join(__dirname, "..", "public", "icon.png"),
+      autoHideMenuBar: true,
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: true,
+      },
+    });
+    speedWin.loadURL(url);
+    return true;
+  }));
+  ipcMain.handle("window:minimize", wrap(() => {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.minimize();
+    return true;
+  }));
+  ipcMain.handle("window:maximize", wrap(() => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMaximized()) mainWindow.unmaximize();
+      else mainWindow.maximize();
+    }
+    return true;
+  }));
+  ipcMain.handle("window:close", wrap(() => {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.close();
+    return true;
+  }));
   ipcMain.handle(
     "widget:hide",
     wrap(() => {
@@ -138,13 +171,16 @@ function registerIpc() {
 
   ipcMain.handle("tools:runCttWinUtil", wrap(() => externalTools.runCttWinUtil()));
   ipcMain.handle("tools:runMassGraveActivation", wrap(() => externalTools.runMassGraveActivation()));
-  ipcMain.handle("tools:openDownloaderWindow", wrap(() => openDownloaderWindow()));
 
   ipcMain.handle("ytdlp:isInstalled", wrap(() => ytdlp.isInstalled()));
   ipcMain.handle("ytdlp:install", wrap(() => ytdlp.install()));
   ipcMain.handle("ytdlp:listFormats", wrap((url) => ytdlp.listFormats(url)));
+  ipcMain.handle("ytdlp:getInfo", wrap((url) => ytdlp.getInfo(url)));
   ipcMain.handle("ytdlp:getHistory", wrap(() => ytdlp.getHistory()));
+  ipcMain.handle("ytdlp:clearHistory", wrap(() => ytdlp.clearHistory()));
   ipcMain.handle("ytdlp:openHistoryItem", wrap((filePath) => ytdlp.openHistoryItem(filePath)));
+  ipcMain.handle("ytdlp:removeHistoryItem", wrap((idOrPath) => ytdlp.removeHistoryItem(idOrPath)));
+  ipcMain.handle("ytdlp:deleteFileAndHistoryItem", wrap((idOrPath, filePath) => ytdlp.deleteFileAndHistoryItem(idOrPath, filePath)));
   ipcMain.handle("ytdlp:download", async (event, payload) => {
     try {
       const result = await ytdlp.download({
@@ -180,16 +216,20 @@ function createWindow() {
 
   const win = new BrowserWindow({
     width: 1200,
-    height: 800,
-    minWidth: 900,
-    minHeight: 600,
-    backgroundColor: "#ECEBE6",
+    height: 830,
+    minWidth: 1150,
+    minHeight: 830,
+    backgroundColor: "#050B14",
+    frame: false,
+    titleBarStyle: "hidden",
     autoHideMenuBar: true,
+    icon: path.join(__dirname, "..", "public", "icon.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
+      sandbox: false,
+      webviewTag: true,
     },
   });
   loadRoute(win, "main");
@@ -228,37 +268,6 @@ function showMainWindow() {
   } else {
     createWindow();
   }
-  return { success: true };
-}
-
-// Singleton - reuses/focuses the existing Downloader window instead of
-// spawning duplicates if the user clicks "Open Downloader" again.
-let downloaderWindow = null;
-function openDownloaderWindow() {
-  if (downloaderWindow && !downloaderWindow.isDestroyed()) {
-    downloaderWindow.focus();
-    return { success: true };
-  }
-
-  downloaderWindow = new BrowserWindow({
-    width: 620,
-    height: 680,
-    minWidth: 480,
-    minHeight: 520,
-    backgroundColor: "#ECEBE6",
-    autoHideMenuBar: true,
-    title: "IceTools - Downloader",
-    webPreferences: {
-      preload: path.join(__dirname, "preload.cjs"),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-    },
-  });
-  loadRoute(downloaderWindow, "downloader");
-  downloaderWindow.on("closed", () => {
-    downloaderWindow = null;
-  });
   return { success: true };
 }
 

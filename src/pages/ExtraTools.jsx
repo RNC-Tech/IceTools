@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Terminal, Download, ExternalLink, Wrench } from "../components/icons/index.js";
+import { Terminal, ExternalLink, Wrench } from "../components/icons/index.js";
+import PageHeader from "../components/PageHeader.jsx";
 import { call } from "../lib/api.js";
 import { useToast } from "../components/ToastProvider.jsx";
 import { useIconHover } from "../lib/useIconHover.js";
@@ -22,30 +23,34 @@ function CttWinUtilCard() {
   }
 
   return (
-    <div className="card bg-base-200">
-      <div className="card-body">
-        <h3 className="card-title text-base gap-2">
-          <Terminal size={18} />
-          CTT Windows Utility
-        </h3>
-        <p className="text-sm opacity-70">
-          Chris Titus Tech's open-source debloat/tweak/config toolkit. Opens in its own window - review what it
-          offers before applying anything.
-        </p>
-        <div className="badge badge-warning badge-sm w-fit">Needs internet access</div>
-        <div className="card-actions justify-end mt-2">
-          <button
-            className="btn btn-primary btn-sm gap-2 tooltip tooltip-left"
-            data-tip="Opens the CTT Windows Utility in a separate window"
-            onClick={handleLaunch}
-            onMouseEnter={iconHover.onMouseEnter}
-            onMouseLeave={iconHover.onMouseLeave}
-            disabled={launching}
-          >
-            {launching ? <span className="loading loading-spinner loading-xs"></span> : <ExternalLink ref={iconHover.ref} size={14} />}
-            Launch
-          </button>
+    <div className="glass-card glass-card-hover rounded-2xl p-5 flex flex-col justify-between space-y-4 border border-base-content/10">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-primary/10 text-primary">
+              <Terminal size={18} />
+            </div>
+            <h3 className="font-bold text-base text-base-content">CTT Windows Utility</h3>
+          </div>
+          <span className="badge badge-sm badge-warning font-semibold">Internet Required</span>
         </div>
+
+        <p className="text-xs text-base-content/70 leading-relaxed">
+          Chris Titus Tech's open-source debloat, tweak, and configuration toolkit. Launches in an isolated window so you can select specific Windows system customizations.
+        </p>
+      </div>
+
+      <div className="pt-2 flex justify-end">
+        <button
+          className="btn btn-sm btn-primary gap-2 rounded-xl shadow-lg shadow-primary/20"
+          onClick={handleLaunch}
+          onMouseEnter={iconHover.onMouseEnter}
+          onMouseLeave={iconHover.onMouseLeave}
+          disabled={launching}
+        >
+          {launching ? <span className="loading loading-spinner loading-xs"></span> : <ExternalLink ref={iconHover.ref} size={14} />}
+          Launch Utility
+        </button>
       </div>
     </div>
   );
@@ -60,84 +65,43 @@ function MassGraveActivationCard() {
     setLaunching(true);
     try {
       await call(window.api.tools.runMassGraveActivation());
-      toast.success("Mass Grave Activation Script launched in a new window.");
+      toast.success("Mass Grave Script launched in a new window.");
     } catch (err) {
-      toast.error(`Could not launch Mass Grave Activation Script: ${err.message}`);
+      toast.error(`Could not launch Mass Grave Script: ${err.message}`);
     } finally {
       setLaunching(false);
     }
   }
 
   return (
-    <div className="card bg-base-200">
-      <div className="card-body">
-        <h3 className="card-title text-base gap-2">
-          <Terminal size={18} />
-          Mass Grave Activation Script
-        </h3>
-        <p className="text-sm opacity-70">
-          Runs the Mass Grave Windows activation script in its own window. Review the prompts before applying
-          anything.
-        </p>
-        <div className="badge badge-warning badge-sm w-fit">Needs internet access</div>
-        <div className="card-actions justify-end mt-2">
-          <button
-            className="btn btn-primary btn-sm gap-2 tooltip tooltip-left"
-            data-tip="Opens the Mass Grave Activation Script in a separate window"
-            onClick={handleLaunch}
-            onMouseEnter={iconHover.onMouseEnter}
-            onMouseLeave={iconHover.onMouseLeave}
-            disabled={launching}
-          >
-            {launching ? <span className="loading loading-spinner loading-xs"></span> : <ExternalLink ref={iconHover.ref} size={14} />}
-            Launch
-          </button>
+    <div className="glass-card glass-card-hover rounded-2xl p-5 flex flex-col justify-between space-y-4 border border-base-content/10">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-primary/10 text-primary">
+              <Terminal size={18} />
+            </div>
+            <h3 className="font-bold text-base text-base-content">MAS Script Launcher</h3>
+          </div>
+          <span className="badge badge-sm badge-warning font-semibold">Internet Required</span>
         </div>
+
+        <p className="text-xs text-base-content/70 leading-relaxed">
+          Runs the Microsoft Activation Scripts (MAS) tool in its own command window. Review all options before applying.
+        </p>
       </div>
-    </div>
-  );
-}
 
-function YtDlpLauncherCard() {
-  const [opening, setOpening] = useState(false);
-  const toast = useToast();
-  const iconHover = useIconHover();
-
-  async function handleOpen() {
-    setOpening(true);
-    try {
-      await call(window.api.tools.openDownloaderWindow());
-    } catch (err) {
-      toast.error(`Could not open Downloader window: ${err.message}`);
-    } finally {
-      setOpening(false);
-    }
-  }
-
-  return (
-    <div className="card bg-base-200">
-      <div className="card-body">
-        <h3 className="card-title text-base gap-2">
-          <Download size={18} />
-          Video/Audio Downloader
-        </h3>
-        <p className="text-sm opacity-70">
-          Download video or audio from a URL, powered by yt-dlp. Opens in its own window so it keeps running
-          independently of the rest of IceTools.
-        </p>
-        <div className="card-actions justify-end mt-2">
-          <button
-            className="btn btn-primary btn-sm gap-2 tooltip tooltip-left"
-            data-tip="Opens the downloader in a separate window"
-            onClick={handleOpen}
-            onMouseEnter={iconHover.onMouseEnter}
-            onMouseLeave={iconHover.onMouseLeave}
-            disabled={opening}
-          >
-            {opening ? <span className="loading loading-spinner loading-xs"></span> : <ExternalLink ref={iconHover.ref} size={14} />}
-            Open Downloader
-          </button>
-        </div>
+      <div className="pt-2 flex justify-end">
+        <button
+          className="btn btn-sm btn-primary gap-2 rounded-xl shadow-lg shadow-primary/20"
+          onClick={handleLaunch}
+          onMouseEnter={iconHover.onMouseEnter}
+          onMouseLeave={iconHover.onMouseLeave}
+          disabled={launching}
+        >
+          {launching ? <span className="loading loading-spinner loading-xs"></span> : <ExternalLink ref={iconHover.ref} size={14} />}
+          Launch MAS
+        </button>
       </div>
     </div>
   );
@@ -145,16 +109,17 @@ function YtDlpLauncherCard() {
 
 export default function ExtraTools() {
   return (
-    <div className="p-6 space-y-4">
-      <h2 className="text-xl font-black flex items-center gap-2">
-        <Wrench size={20} />
-        Extra Tools
-      </h2>
-      <p className="text-sm opacity-60">Optional third-party utilities and helpers.</p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="p-8 space-y-8">
+      <PageHeader
+        icon={Wrench}
+        title="Extra Tools & Utilities"
+        description="Optional third-party scripts and administrative toolkits to complement your Windows optimization workflow."
+        badge="Utilities Hub"
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <CttWinUtilCard />
         <MassGraveActivationCard />
-        <YtDlpLauncherCard />
       </div>
     </div>
   );

@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { LayoutDashboard, MemoryStick, HardDrive, Gpu, HardDriveDownload, HeartPulse, ShieldQuestion } from "lucide-react";
+import { LayoutDashboard, MemoryStick, HardDrive, Gpu, HardDriveDownload, HeartPulse, ShieldQuestion, Zap, CheckCircle2, ArrowRight } from "lucide-react";
 import { Cpu, Sparkles } from "../components/icons/index.js";
-import StatCard from "../components/StatCard.jsx";
-import AnimatedIcon from "../components/AnimatedIcon.jsx";
+import PageHeader from "../components/PageHeader.jsx";
+import MetricCard from "../components/MetricCard.jsx";
+import SpotlightCard from "../components/SpotlightCard.jsx";
+import MagnetButton from "../components/MagnetButton.jsx";
+import CountUp from "../components/CountUp.jsx";
 import { Skeleton, StatCardSkeleton } from "../components/Skeleton.jsx";
 import { call, formatBytes } from "../lib/api.js";
 import { useToast } from "../components/ToastProvider.jsx";
@@ -10,32 +13,41 @@ import ConfirmModal from "../components/ConfirmModal.jsx";
 import { useIconHover } from "../lib/useIconHover.js";
 
 const LIVE_POLL_MS = 2000;
-const SLOW_REFRESH_EVERY_N_POLLS = 10; // disks/GPU refreshed roughly every 20s
+const SLOW_REFRESH_EVERY_N_POLLS = 10;
 
 function CpuDetailModal({ open, onClose, perCore }) {
   if (!open) return null;
   return (
     <div className="modal modal-open">
-      <div className="modal-box">
-        <h3 className="font-black text-lg">Per-Core Load</h3>
+      <div className="modal-box glass-card bg-[#0b172a]/95 border border-blue-500/20 rounded-3xl max-w-md text-white">
+        <div className="flex items-center justify-between border-b border-blue-500/15 pb-3">
+          <h3 className="font-bold text-base flex items-center gap-2 text-blue-400">
+            <Cpu size={18} /> Per-Core Load Breakdown
+          </h3>
+          <button className="btn btn-sm btn-ghost btn-circle text-slate-400" onClick={onClose}>✕</button>
+        </div>
         <div className="grid grid-cols-2 gap-3 py-4">
           {(perCore || []).map((load, i) => (
-            <div key={i} className="space-y-1">
-              <div className="flex items-center justify-between text-xs opacity-70">
-                <span>Core {i}</span>
-                <span>{load}%</span>
+            <div key={i} className="p-2.5 rounded-2xl bg-black/30 border border-blue-500/10 space-y-1">
+              <div className="flex items-center justify-between text-xs font-semibold">
+                <span className="text-slate-300">Core {i}</span>
+                <span className="font-mono text-blue-400">{load}%</span>
               </div>
-              <progress className="progress progress-primary w-full" value={load} max="100"></progress>
+              <progress
+                className={`progress w-full h-1.5 ${load > 80 ? "progress-warning" : "progress-primary"}`}
+                value={load}
+                max="100"
+              ></progress>
             </div>
           ))}
         </div>
-        <div className="modal-action">
-          <button className="btn" onClick={onClose}>
-            Close
+        <div className="modal-action border-t border-blue-500/15 pt-3">
+          <button className="btn btn-sm btn-primary rounded-full px-5" onClick={onClose}>
+            Done
           </button>
         </div>
       </div>
-      <div className="modal-backdrop" onClick={onClose}></div>
+      <div className="modal-backdrop bg-black/60 backdrop-blur-md" onClick={onClose}></div>
     </div>
   );
 }
@@ -50,37 +62,53 @@ function MemoryDetailModal({ open, onClose }) {
     call(window.api.system.getProcesses())
       .then((data) => setProcesses([...data].sort((a, b) => b.memBytes - a.memBytes).slice(0, 10)))
       .catch((err) => toast.error(`Failed to load processes: ${err.message}`));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   if (!open) return null;
   return (
     <div className="modal modal-open">
-      <div className="modal-box">
-        <h3 className="font-black text-lg">Top Memory Consumers</h3>
-        <div className="py-4">
+      <div className="modal-box glass-card bg-[#0b172a]/95 border border-blue-500/20 rounded-3xl max-w-lg text-white">
+        <div className="flex items-center justify-between border-b border-blue-500/15 pb-3">
+          <h3 className="font-bold text-base flex items-center gap-2 text-blue-400">
+            <MemoryStick size={18} /> Top Memory Consumers
+          </h3>
+          <button className="btn btn-sm btn-ghost btn-circle text-slate-400" onClick={onClose}>✕</button>
+        </div>
+        <div className="py-3">
           {processes === null ? (
-            <span className="loading loading-spinner loading-sm"></span>
+            <div className="flex justify-center p-6">
+              <span className="loading loading-spinner loading-md text-blue-400"></span>
+            </div>
           ) : (
-            <table className="table table-sm">
-              <tbody>
-                {processes.map((p) => (
-                  <tr key={p.pid}>
-                    <td className="truncate max-w-[200px]">{p.name}</td>
-                    <td className="text-right font-mono">{formatBytes(p.memBytes)}</td>
+            <div className="overflow-x-auto">
+              <table className="table table-sm w-full">
+                <thead>
+                  <tr className="text-xs text-slate-400 border-b border-blue-500/15">
+                    <th>Process Name</th>
+                    <th className="text-right">Memory Used</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {processes.map((p) => (
+                    <tr key={p.pid} className="border-b border-white/5 hover:bg-blue-500/5">
+                      <td className="font-medium truncate max-w-[240px] text-xs text-slate-200">{p.name}</td>
+                      <td className="text-right font-mono text-xs font-bold text-blue-400">
+                        {formatBytes(p.memBytes)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
-        <div className="modal-action">
-          <button className="btn" onClick={onClose}>
+        <div className="modal-action border-t border-blue-500/15 pt-3">
+          <button className="btn btn-sm btn-primary rounded-full px-5" onClick={onClose}>
             Close
           </button>
         </div>
       </div>
-      <div className="modal-backdrop" onClick={onClose}></div>
+      <div className="modal-backdrop bg-black/60 backdrop-blur-md" onClick={onClose}></div>
     </div>
   );
 }
@@ -91,7 +119,7 @@ export default function Dashboard() {
   const [trimming, setTrimming] = useState(false);
   const [optimizing, setOptimizing] = useState(new Set());
   const [optimizeTarget, setOptimizeTarget] = useState(null);
-  const [detailModal, setDetailModal] = useState(null); // "cpu" | "memory" | null
+  const [detailModal, setDetailModal] = useState(null);
   const toast = useToast();
   const trimIcon = useIconHover();
 
@@ -130,7 +158,6 @@ export default function Dashboard() {
       cancelled = true;
       clearTimeout(timer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleQuickTrim() {
@@ -164,127 +191,204 @@ export default function Dashboard() {
 
   if (!stats) {
     return (
-      <div className="p-6 space-y-6">
-        <Skeleton className="h-7 w-56" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="p-8 space-y-6">
+        <Skeleton className="h-8 w-64 rounded-xl" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <StatCardSkeleton />
           <StatCardSkeleton />
           <StatCardSkeleton />
-        </div>
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-16" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-          </div>
         </div>
       </div>
     );
   }
 
+  const diskAvg = stats.disks.reduce((sum, d) => sum + d.usedPercent, 0) / (stats.disks.length || 1);
+  const healthScore = Math.max(10, Math.round(100 - (stats.cpu.loadPercent * 0.35 + stats.memory.usedPercent * 0.45 + diskAvg * 0.2)));
+
   return (
-    <div className="p-6 space-y-6">
-      <h2 className="text-xl font-black flex items-center gap-2">
-        <AnimatedIcon icon={LayoutDashboard} size={20} />
-        System Overview
-      </h2>
+    <div className="p-8 space-y-6">
+      <PageHeader
+        icon={LayoutDashboard}
+        title="Sub-Zero Performance Center"
+        description="Real-time telemetry, hardware load meters, and single-click RAM & Disk optimization."
+        badge="Live Telemetry"
+        actions={
+          <MagnetButton
+            onClick={handleQuickTrim}
+            disabled={trimming}
+            className="btn btn-sm btn-primary rounded-full px-6 py-2.5 flex items-center gap-2 shadow-lg shadow-blue-500/35 font-bold"
+          >
+            {trimming ? (
+              <span className="loading loading-spinner loading-xs"></span>
+            ) : (
+              <>
+                <Sparkles ref={trimIcon.ref} size={15} />
+                <span>Sub-Zero Quick Trim</span>
+                <ArrowRight size={15} />
+              </>
+            )}
+          </MagnetButton>
+        }
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="cursor-pointer" onClick={() => setDetailModal("cpu")}>
-          <StatCard
-            icon={Cpu}
-            label="CPU Load"
-            value={`${stats.cpu.loadPercent}%`}
-            sub={`${stats.cpu.cores} cores · ${stats.cpu.model} · click for per-core`}
-            progress={stats.cpu.loadPercent}
-          />
-        </div>
-
-        <div className="card bg-base-200 shadow-sm">
-          <div className="card-body p-4 gap-2">
-            <div className="cursor-pointer" onClick={() => setDetailModal("memory")}>
-              <span className="flex items-center gap-1.5 text-xs uppercase tracking-wide opacity-60">
-                <MemoryStick size={13} />
-                Memory Used
-              </span>
-              <span className="text-2xl font-black">{stats.memory.usedPercent}%</span>
-              <span className="text-xs opacity-60 block">
-                {formatBytes(stats.memory.usedBytes)} / {formatBytes(stats.memory.totalBytes)} · click for top processes
-              </span>
-              <progress className="progress progress-primary w-full mt-1" value={stats.memory.usedPercent} max="100"></progress>
+      {/* Glacial Health Hero Banner with SpotlightCard & Volumetric Light Overlay */}
+      <SpotlightCard className="p-6 border border-blue-500/30 bg-gradient-to-r from-blue-950/40 via-slate-900/50 to-sky-950/40">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <div className="relative flex items-center justify-center shrink-0">
+              <svg className="w-24 h-24 transform -rotate-90">
+                <circle cx="48" cy="48" r="38" stroke="currentColor" strokeWidth="8" className="text-slate-900" fill="transparent" />
+                <circle
+                  cx="48"
+                  cy="48"
+                  r="38"
+                  stroke="currentColor"
+                  strokeWidth="8"
+                  strokeDasharray="238.76"
+                  strokeDashoffset={238.76 * (1 - healthScore / 100)}
+                  strokeLinecap="round"
+                  className="text-blue-400 transition-all duration-1000 ease-out"
+                  fill="transparent"
+                />
+              </svg>
+              <div className="absolute text-center">
+                <span className="text-2xl font-black font-mono text-blue-400">
+                  <CountUp to={healthScore} suffix="%" />
+                </span>
+                <span className="text-[9px] uppercase font-bold text-slate-400 block">Index</span>
+              </div>
             </div>
-            <div className="flex justify-end">
-              <button
-                className="btn btn-sm btn-primary gap-1.5 tooltip"
-                data-tip="Reclaims idle RAM - always safe"
-                onClick={handleQuickTrim}
-                onMouseEnter={trimIcon.onMouseEnter}
-                onMouseLeave={trimIcon.onMouseLeave}
-                disabled={trimming}
-              >
-                {trimming ? <span className="loading loading-spinner loading-xs"></span> : <Sparkles ref={trimIcon.ref} size={14} />}
-                Quick Trim
-              </button>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-black text-white tracking-tight">Glacial Performance Index</h3>
+                <span className="badge badge-sm badge-success gap-1 font-semibold rounded-full px-3">
+                  <CheckCircle2 size={11} /> {healthScore >= 75 ? "Optimal" : healthScore >= 50 ? "Moderate" : "High Load"}
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
+                Calculated live from CPU workload, RAM allocation, and storage status. Click Sub-Zero Quick Trim to reclaim idle resources instantly.
+              </p>
             </div>
           </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <button className="btn btn-sm btn-outline rounded-full px-5 border-blue-500/40 text-blue-300 flex items-center gap-2" onClick={handleQuickTrim} disabled={trimming}>
+              <Zap size={14} />
+              <span>Reclaim Idle RAM</span>
+              <ArrowRight size={14} />
+            </button>
+          </div>
         </div>
+      </SpotlightCard>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <MetricCard
+          icon={Cpu}
+          label="CPU Load"
+          value={`${stats.cpu.loadPercent}%`}
+          sub={`${stats.cpu.cores} cores · ${stats.cpu.model} (click for per-core)`}
+          progress={stats.cpu.loadPercent}
+          warnAt={80}
+          onClick={() => setDetailModal("cpu")}
+        />
+
+        <MetricCard
+          icon={MemoryStick}
+          label="Memory Used"
+          value={`${stats.memory.usedPercent}%`}
+          sub={`${formatBytes(stats.memory.usedBytes)} / ${formatBytes(stats.memory.totalBytes)} (click for process list)`}
+          progress={stats.memory.usedPercent}
+          warnAt={80}
+          onClick={() => setDetailModal("memory")}
+        />
 
         {gpu && gpu.available ? (
-          <StatCard
+          <MetricCard
             icon={Gpu}
             label="GPU Load"
             value={`${gpu.loadPercent}%`}
             sub={`${gpu.name} · ${gpu.temperatureC}°C`}
             progress={gpu.loadPercent}
+            warnAt={80}
           />
         ) : (
-          <StatCard icon={Gpu} label="GPU Load" value="N/A" sub="No NVIDIA GPU detected" />
+          <MetricCard icon={Gpu} label="GPU Load" value="N/A" sub="No NVIDIA GPU detected" />
         )}
       </div>
 
-      <div>
-        <h3 className="text-sm font-medium opacity-70 mb-2">Disks</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {stats.disks.map((d) => (
-            <div key={d.mount} className="card bg-base-200 shadow-sm">
-              <div className="card-body p-4 gap-2">
+      <div className="pt-2 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold tracking-tight uppercase text-slate-300 flex items-center gap-2">
+            <HardDrive size={16} className="text-blue-400" /> Storage Drives ({stats.disks.length})
+          </h3>
+          <span className="text-xs text-slate-400">Auto-refreshed periodically</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {stats.disks.map((d) => {
+            const diskWarn = d.usedPercent >= 80;
+            return (
+              <SpotlightCard key={d.mount} className="p-5 space-y-3 glass-card-hover">
                 <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-xs uppercase tracking-wide opacity-60">
-                    <HardDrive size={13} />
-                    {d.mount}
-                  </span>
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-2xl bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                      <HardDrive size={16} />
+                    </div>
+                    <div>
+                      <span className="font-bold text-base text-white">{d.mount} Drive</span>
+                      <p className="text-xs text-slate-400">
+                        {formatBytes(d.usedBytes)} used of {formatBytes(d.totalBytes)}
+                      </p>
+                    </div>
+                  </div>
+
                   <span
-                    className={`badge badge-sm gap-1 ${
-                      d.healthStatus === "Healthy" ? "badge-success" : d.healthStatus === "Unknown" ? "badge-ghost" : "badge-error"
+                    className={`badge badge-sm gap-1 font-semibold rounded-full ${
+                      d.healthStatus === "Healthy"
+                        ? "badge-success bg-success/15 text-success border-success/30"
+                        : d.healthStatus === "Unknown"
+                        ? "badge-ghost opacity-70"
+                        : "badge-error bg-error/15 text-error border-error/30"
                     }`}
                   >
-                    {d.healthStatus === "Unknown" ? <ShieldQuestion size={11} /> : <HeartPulse size={11} />}
+                    {d.healthStatus === "Unknown" ? <ShieldQuestion size={12} /> : <HeartPulse size={12} />}
                     {d.healthStatus}
                   </span>
                 </div>
-                <span className="text-2xl font-black">{d.usedPercent}%</span>
-                <span className="text-xs opacity-60">
-                  {formatBytes(d.usedBytes)} / {formatBytes(d.totalBytes)}
-                </span>
-                <progress className="progress progress-primary w-full mt-1" value={d.usedPercent} max="100"></progress>
-                <div className="flex justify-end">
+
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs font-medium">
+                    <span className="text-slate-400">Space Allocation</span>
+                    <span className={`font-mono ${diskWarn ? "text-warning" : "text-blue-400 font-bold"}`}>
+                      {d.usedPercent}% Used
+                    </span>
+                  </div>
+                  <progress
+                    className={`progress w-full h-2 rounded-full ${diskWarn ? "progress-warning" : "progress-primary"}`}
+                    value={d.usedPercent}
+                    max="100"
+                  ></progress>
+                </div>
+
+                <div className="pt-2 flex justify-end">
                   <button
-                    className="btn btn-sm btn-outline gap-1.5 tooltip"
-                    data-tip="Defragments HDDs or TRIMs SSDs - can take a while"
+                    className="btn btn-xs btn-outline rounded-full px-4 text-blue-300 border-blue-500/30 hover:bg-blue-500/10 flex items-center gap-1.5"
                     onClick={() => setOptimizeTarget(d.mount)}
                     disabled={optimizing.has(d.mount)}
                   >
                     {optimizing.has(d.mount) ? (
                       <span className="loading loading-spinner loading-xs"></span>
                     ) : (
-                      <HardDriveDownload size={14} />
+                      <HardDriveDownload size={13} />
                     )}
-                    {optimizing.has(d.mount) ? "Optimizing..." : "Optimize"}
+                    <span>{optimizing.has(d.mount) ? "Optimizing..." : "Optimize Drive"}</span>
+                    <ArrowRight size={12} />
                   </button>
                 </div>
-              </div>
-            </div>
-          ))}
+              </SpotlightCard>
+            );
+          })}
         </div>
       </div>
 
@@ -294,8 +398,8 @@ export default function Dashboard() {
       <ConfirmModal
         open={Boolean(optimizeTarget)}
         title="Optimize drive?"
-        message={`This runs Windows' drive optimizer on ${optimizeTarget} - defragmenting an HDD or TRIMing an SSD as appropriate. It can take several minutes and will use disk I/O heavily while running.`}
-        confirmLabel="Optimize"
+        message={`This runs Windows' drive optimizer on ${optimizeTarget} (defragmenting HDDs or TRIMing SSDs). It can take several minutes.`}
+        confirmLabel="Optimize Drive"
         danger={false}
         onConfirm={() => handleOptimize(optimizeTarget)}
         onCancel={() => setOptimizeTarget(null)}

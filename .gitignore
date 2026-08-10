@@ -16,3 +16,4 @@ release/
 # Ignore markdown documentation & skill files (keep README.md tracked)
 *.md
 !README.md
+CHANGELOG.md

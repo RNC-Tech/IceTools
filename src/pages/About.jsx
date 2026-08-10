@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Info, RefreshCw, CheckCircle2, ChevronDown, Cpu, Layers, ShieldCheck, Zap, Download, Code2, Globe } from "lucide-react";
+import { Info, RefreshCw, CheckCircle2, ChevronDown, Layers, Zap, ExternalLink } from "lucide-react";
 import PageHeader from "../components/PageHeader.jsx";
 import { call } from "../lib/api.js";
-import { useUpdater } from "../lib/useUpdater.js";
 import { useToast } from "../components/ToastProvider.jsx";
 import { Skeleton } from "../components/Skeleton.jsx";
 
@@ -54,7 +53,6 @@ function ChangelogItem({ release, isDefaultOpen }) {
 export default function About() {
   const [version, setVersion] = useState(null);
   const [changelog, setChangelog] = useState(null);
-  const { status, version: updateVersion, releaseNotes, percent, check, download, install } = useUpdater();
   const toast = useToast();
 
   useEffect(() => {
@@ -66,12 +64,8 @@ export default function About() {
       .catch(() => setChangelog([]));
   }, []);
 
-  async function handleCheck() {
-    try {
-      await check();
-    } catch (err) {
-      toast.error(`Update check failed: ${err.message}`);
-    }
+  function handleOpenGitHubReleases() {
+    call(window.api.app.openExternal("https://github.com/RNC-Tech/IceTools/releases")).catch((err) => toast.error(err.message));
   }
 
   return (
@@ -79,7 +73,7 @@ export default function About() {
       <PageHeader
         icon={Info}
         title="About IceTools"
-        description="Comprehensive system information, release history, technology stack, and software update status."
+        description="Comprehensive system information, release history, and software release links."
         badge="System Information"
       />
 
@@ -114,134 +108,69 @@ export default function About() {
           </div>
         </div>
 
-        {/* Software Updater Card */}
+        {/* Software Updates Card */}
         <div className="glass-card rounded-2xl p-6 space-y-4 border border-blue-500/20 shadow-xl flex flex-col justify-between">
           <div>
             <h4 className="font-bold text-sm text-white flex items-center gap-2 mb-2">
-              <RefreshCw size={16} className="text-blue-400" /> Software Updates
+              <RefreshCw size={16} className="text-blue-400" /> Software Releases
             </h4>
-            <p className="text-xs text-slate-400">
-              IceTools checks GitHub Releases automatically to keep your system optimizer updated with the latest performance patches.
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Check the official GitHub repository for new release packages, feature updates, and performance patches.
             </p>
           </div>
 
-          <div className="space-y-3 pt-2">
-            {status === "idle" && (
-              <button className="btn btn-sm btn-primary rounded-full w-full gap-2 font-bold shadow-lg shadow-blue-500/30" onClick={handleCheck}>
-                <RefreshCw size={14} />
-                Check for Updates
-              </button>
-            )}
+          <div className="space-y-2.5 pt-2">
+            <button
+              className="btn btn-sm btn-disabled opacity-50 cursor-not-available rounded-full w-full gap-2 font-semibold text-slate-400 border-slate-700 bg-slate-800/40"
+              disabled
+              title="In-app automatic background check is disabled"
+            >
+              <RefreshCw size={14} />
+              Check for Updates (Disabled)
+            </button>
 
-            {status === "checking" && (
-              <div className="flex items-center justify-center gap-2 text-xs text-blue-300 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
-                <span className="loading loading-spinner loading-xs text-blue-400"></span>
-                Checking GitHub Releases...
-              </div>
-            )}
-
-            {status === "up-to-date" && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20">
-                  <CheckCircle2 size={16} />
-                  IceTools is up to date {version ? `(v${version})` : ""}.
-                </div>
-                <button className="btn btn-xs btn-outline rounded-full border-blue-500/30 text-blue-300 w-full" onClick={handleCheck}>
-                  Check Again
-                </button>
-              </div>
-            )}
-
-            {status === "available" && (
-              <div className="space-y-3">
-                <div className="text-xs font-bold text-white">
-                  New Version {updateVersion} is available!
-                </div>
-                {releaseNotes && (
-                  <div className="bg-slate-900/80 rounded-xl p-3 max-h-36 overflow-y-auto border border-blue-500/20">
-                    <pre className="text-[11px] whitespace-pre-wrap font-sans text-slate-300">{releaseNotes}</pre>
-                  </div>
-                )}
-                <button
-                  className="btn btn-sm btn-primary rounded-full w-full gap-2 font-bold shadow-lg shadow-blue-500/30"
-                  onClick={() => download().catch((err) => toast.error(`Download failed: ${err.message}`))}
-                >
-                  Download Update
-                </button>
-              </div>
-            )}
-
-            {status === "downloading" && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs font-semibold text-slate-300">
-                  <span>Downloading update...</span>
-                  <span className="font-mono text-blue-400 font-bold">{percent}%</span>
-                </div>
-                <progress className="progress progress-primary w-full h-2 rounded-full" value={percent} max="100"></progress>
-              </div>
-            )}
-
-            {status === "downloaded" && (
-              <div className="space-y-3">
-                <div className="text-xs font-bold text-emerald-400 bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20">
-                  Update downloaded and ready to install.
-                </div>
-                <button
-                  className="btn btn-sm btn-primary rounded-full w-full gap-2 font-bold shadow-lg shadow-blue-500/30"
-                  onClick={() => install().catch((err) => toast.error(`Install failed: ${err.message}`))}
-                >
-                  Restart & Install Update
-                </button>
-              </div>
-            )}
-
-            {status === "error" && (
-              <div className="space-y-2">
-                <div className="text-xs text-rose-400 font-semibold p-2 bg-rose-500/10 rounded-xl border border-rose-500/20">
-                  Update check failed.
-                </div>
-                <button className="btn btn-xs btn-outline rounded-full border-blue-500/30 text-blue-300 w-full" onClick={handleCheck}>
-                  Try Again
-                </button>
-              </div>
-            )}
+            <button
+              className="btn btn-sm btn-primary rounded-full w-full gap-2 font-bold shadow-lg shadow-blue-500/30"
+              onClick={handleOpenGitHubReleases}
+            >
+              <ExternalLink size={14} />
+              View Releases on GitHub
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Feature Highlights & Tech Stack */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div className="glass-card rounded-2xl p-5 border border-blue-500/15 space-y-3 shadow-xl">
-          <h4 className="font-bold text-sm text-white flex items-center gap-2">
-            <Zap size={16} className="text-amber-400" /> Key Features & Capabilities
-          </h4>
-          <ul className="space-y-2 text-xs text-slate-300">
-            <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-              Live CPU, RAM, GPU & Disk hardware monitoring telemetry
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-              Sub-Zero One-Click RAM and Temporary Junk File Cleaner
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-              Integrated Windows Services and Startup app manager
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-              Network speed tester with embedded Fast.com & Speedtest.net
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-              App Uninstaller with deep leftover file & registry scanner
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-              Sage Downloader for YouTube & web media with history controls
-            </li>
-          </ul>
-        </div>
+      {/* Feature Highlights */}
+      <div className="glass-card rounded-2xl p-5 border border-blue-500/15 space-y-3 shadow-xl">
+        <h4 className="font-bold text-sm text-white flex items-center gap-2">
+          <Zap size={16} className="text-amber-400" /> Key Features & Capabilities
+        </h4>
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-300">
+          <li className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0"></span>
+            Live CPU, RAM, GPU & Disk hardware monitoring telemetry
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0"></span>
+            Sub-Zero One-Click RAM and Temporary Junk File Cleaner
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0"></span>
+            Integrated Windows Services and Startup app manager
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0"></span>
+            Network speed tester with embedded Fast.com & Speedtest.net
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0"></span>
+            App Uninstaller with deep leftover file & registry scanner
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0"></span>
+            Sage Downloader for YouTube & web media with history controls
+          </li>
+        </ul>
       </div>
 
       {/* Release History & Changelog */}

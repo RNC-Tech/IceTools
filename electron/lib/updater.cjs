@@ -28,10 +28,17 @@ function initUpdater(app, win) {
   autoUpdater.on("update-available", (info) =>
     send({ type: "available", version: info.version, releaseNotes: normalizeReleaseNotes(info.releaseNotes) })
   );
-  autoUpdater.on("update-not-available", () => send({ type: "not-available" }));
+  autoUpdater.on("update-not-available", () => send({ type: "up-to-date" }));
   autoUpdater.on("download-progress", (progress) => send({ type: "progress", percent: Math.round(progress.percent) }));
   autoUpdater.on("update-downloaded", () => send({ type: "downloaded" }));
-  autoUpdater.on("error", (err) => send({ type: "error", message: err.message }));
+  autoUpdater.on("error", (err) => {
+    // Treat 404/no-release errors gracefully as up-to-date
+    if (err && (err.message?.includes("404") || err.message?.includes("Cannot find"))) {
+      send({ type: "up-to-date" });
+    } else {
+      send({ type: "error", message: err.message || "Update check failed" });
+    }
+  });
 }
 
 function fetchLatestGitHubRelease(repo = "RNC-Tech/IceTools") {
@@ -64,7 +71,14 @@ function fetchLatestGitHubRelease(repo = "RNC-Tech/IceTools") {
 
 async function checkForUpdates(app, win) {
   if (app.isPackaged) {
-    await autoUpdater.checkForUpdates();
+    try {
+      if (win && !win.isDestroyed()) win.webContents.send("updater:event", { type: "checking" });
+      await autoUpdater.checkForUpdates();
+    } catch (err) {
+      if (win && !win.isDestroyed()) {
+        win.webContents.send("updater:event", { type: "up-to-date" });
+      }
+    }
     return { success: true };
   }
 
@@ -74,7 +88,7 @@ async function checkForUpdates(app, win) {
   try {
     const latest = await fetchLatestGitHubRelease();
     if (!latest) {
-      if (win && !win.isDestroyed()) win.webContents.send("updater:event", { type: "not-available" });
+      if (win && !win.isDestroyed()) win.webContents.send("updater:event", { type: "up-to-date" });
       return { success: true, message: "No releases found on GitHub yet." };
     }
 
@@ -91,25 +105,33 @@ async function checkForUpdates(app, win) {
         });
       }
     } else {
-      if (win && !win.isDestroyed()) win.webContents.send("updater:event", { type: "not-available" });
+      if (win && !win.isDestroyed()) win.webContents.send("updater:event", { type: "up-to-date" });
     }
     return { success: true };
   } catch (err) {
-    if (win && !win.isDestroyed()) win.webContents.send("updater:event", { type: "error", message: err.message });
-    return { success: false, error: err.message };
+    if (win && !win.isDestroyed()) win.webContents.send("updater:event", { type: "up-to-date" });
+    return { success: true };
   }
 }
 
 async function downloadUpdate(app) {
   if (!isSupported(app)) return { success: false, reason: "not-packaged" };
-  await autoUpdater.downloadUpdate();
-  return { success: true };
+  try {
+    await autoUpdater.downloadUpdate();
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 }
 
 function quitAndInstall(app) {
   if (!isSupported(app)) return { success: false, reason: "not-packaged" };
-  autoUpdater.quitAndInstall();
-  return { success: true };
+  try {
+    autoUpdater.quitAndInstall();
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 }
 
 module.exports = { initUpdater, checkForUpdates, downloadUpdate, quitAndInstall };

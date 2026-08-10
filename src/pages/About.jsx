@@ -88,7 +88,7 @@ export default function About() {
         <div className="glass-card rounded-2xl p-6 flex flex-col justify-between space-y-4 border border-blue-500/20 shadow-xl">
           <div className="flex items-start gap-4">
             <div className="p-3 rounded-2xl bg-blue-500/15 border border-blue-500/30 shadow-lg shadow-blue-500/20 shrink-0">
-              <img src="/icetools.svg" alt="IceTools Logo" className="w-10 h-10 object-contain" />
+              <img src="./icetools.svg" alt="IceTools Logo" className="w-10 h-10 object-contain" />
             </div>
             <div>
               <h3 className="text-2xl font-black text-white tracking-tight">IceTools</h3>

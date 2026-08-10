@@ -69,7 +69,7 @@ function registerIpc() {
       backgroundColor: "#050B14",
       frame: true,
       title: title,
-      icon: path.join(__dirname, "..", "public", "icon.png"),
+      icon: path.join(__dirname, "assets", "icon.png"),
       autoHideMenuBar: true,
       webPreferences: {
         contextIsolation: true,
@@ -223,7 +223,7 @@ function createWindow() {
     frame: false,
     titleBarStyle: "hidden",
     autoHideMenuBar: true,
-    icon: path.join(__dirname, "..", "public", "icon.png"),
+    icon: path.join(__dirname, "assets", "icon.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,

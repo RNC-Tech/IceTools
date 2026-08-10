@@ -125,7 +125,7 @@ export default function WidgetWindow() {
           onClick={() => call(window.api.app.showMainWindow()).catch(() => {})}
           title="Open IceTools"
         >
-          <img src="/icetools.svg" alt="IceTools Logo" className="w-5 h-5 object-contain" />
+          <img src="./icetools.svg" alt="IceTools Logo" className="w-5 h-5 object-contain" />
         </button>
         <div className="flex-1 min-w-0">
           <h1 className="text-sm font-black leading-tight text-white tracking-wide">IceTools Widget</h1>

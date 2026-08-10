@@ -8,7 +8,7 @@ export default function IceLogo({ size = "md", showSubtitle = true }) {
     <div className="flex items-center gap-2.5 select-none">
       <div className="relative p-2 rounded-2xl bg-blue-500/15 border border-blue-500/35 text-blue-400 shadow-lg shadow-blue-500/25 shrink-0 group flex items-center justify-center">
         <img
-          src="/icetools.svg"
+          src="./icetools.svg"
           alt="IceTools Logo"
           className={`${iconSizeClass} transition-transform group-hover:scale-110 duration-300 object-contain`}
         />

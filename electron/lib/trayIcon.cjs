@@ -4,7 +4,7 @@ const { nativeImage } = require("electron");
 
 function buildTrayIcon(size = 32) {
   try {
-    const pngPath = path.join(__dirname, "..", "..", "public", "icon.png");
+    const pngPath = path.join(__dirname, "..", "assets", "icon.png");
     if (fs.existsSync(pngPath)) {
       const img = nativeImage.createFromPath(pngPath);
       if (!img.isEmpty()) return img.resize({ width: size, height: size });
@@ -14,13 +14,13 @@ function buildTrayIcon(size = 32) {
   }
 
   try {
-    const svgPath = path.join(__dirname, "..", "..", "public", "icetools.svg");
-    if (fs.existsSync(svgPath)) {
-      const img = nativeImage.createFromPath(svgPath);
+    const fallbackPng = path.join(__dirname, "..", "..", "public", "icon.png");
+    if (fs.existsSync(fallbackPng)) {
+      const img = nativeImage.createFromPath(fallbackPng);
       if (!img.isEmpty()) return img.resize({ width: size, height: size });
     }
   } catch {
-    // fallback to generated buffer
+    // fallback
   }
 
   const buffer = Buffer.alloc(size * size * 4);

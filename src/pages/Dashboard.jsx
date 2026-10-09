@@ -19,8 +19,8 @@ function CpuDetailModal({ open, onClose, perCore }) {
   if (!open) return null;
   return (
     <div className="modal modal-open">
-      <div className="modal-box glass-card bg-[#0b172a]/95 border border-blue-500/20 rounded-3xl max-w-md text-white">
-        <div className="flex items-center justify-between border-b border-blue-500/15 pb-3">
+      <div className="modal-box glass-card bg-slate-900/95 border border-white/[0.08] rounded-2xl max-w-md text-white p-6 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-white/[0.06] pb-3.5">
           <h3 className="font-bold text-base flex items-center gap-2 text-blue-400">
             <Cpu size={18} /> Per-Core Load Breakdown
           </h3>
@@ -28,10 +28,10 @@ function CpuDetailModal({ open, onClose, perCore }) {
         </div>
         <div className="grid grid-cols-2 gap-3 py-4">
           {(perCore || []).map((load, i) => (
-            <div key={i} className="p-2.5 rounded-2xl bg-black/30 border border-blue-500/10 space-y-1">
+            <div key={i} className="p-2.5 rounded-xl bg-black/25 border border-white/[0.06] space-y-1">
               <div className="flex items-center justify-between text-xs font-semibold">
                 <span className="text-slate-300">Core {i}</span>
-                <span className="font-mono text-blue-400">{load}%</span>
+                <span className="font-mono text-blue-400">{Math.round(load)}%</span>
               </div>
               <progress
                 className={`progress w-full h-1.5 ${load > 80 ? "progress-warning" : "progress-primary"}`}
@@ -41,8 +41,8 @@ function CpuDetailModal({ open, onClose, perCore }) {
             </div>
           ))}
         </div>
-        <div className="modal-action border-t border-blue-500/15 pt-3">
-          <button className="btn btn-sm btn-primary rounded-full px-5" onClick={onClose}>
+        <div className="modal-action border-t border-white/[0.06] pt-3.5">
+          <button className="btn btn-sm btn-primary rounded-lg px-5 font-medium" onClick={onClose}>
             Done
           </button>
         </div>
@@ -67,8 +67,8 @@ function MemoryDetailModal({ open, onClose }) {
   if (!open) return null;
   return (
     <div className="modal modal-open">
-      <div className="modal-box glass-card bg-[#0b172a]/95 border border-blue-500/20 rounded-3xl max-w-lg text-white">
-        <div className="flex items-center justify-between border-b border-blue-500/15 pb-3">
+      <div className="modal-box glass-card bg-slate-900/95 border border-white/[0.08] rounded-2xl max-w-lg text-white p-6 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-white/[0.06] pb-3.5">
           <h3 className="font-bold text-base flex items-center gap-2 text-blue-400">
             <MemoryStick size={18} /> Top Memory Consumers
           </h3>
@@ -83,14 +83,14 @@ function MemoryDetailModal({ open, onClose }) {
             <div className="overflow-x-auto">
               <table className="table table-sm w-full">
                 <thead>
-                  <tr className="text-xs text-slate-400 border-b border-blue-500/15">
+                  <tr className="text-xs text-slate-400 border-b border-white/[0.06]">
                     <th>Process Name</th>
                     <th className="text-right">Memory Used</th>
                   </tr>
                 </thead>
                 <tbody>
                   {processes.map((p) => (
-                    <tr key={p.pid} className="border-b border-white/5 hover:bg-blue-500/5">
+                    <tr key={p.pid} className="border-b border-white/[0.04] hover:bg-white/[0.03]">
                       <td className="font-medium truncate max-w-[240px] text-xs text-slate-200">{p.name}</td>
                       <td className="text-right font-mono text-xs font-bold text-blue-400">
                         {formatBytes(p.memBytes)}
@@ -102,8 +102,8 @@ function MemoryDetailModal({ open, onClose }) {
             </div>
           )}
         </div>
-        <div className="modal-action border-t border-blue-500/15 pt-3">
-          <button className="btn btn-sm btn-primary rounded-full px-5" onClick={onClose}>
+        <div className="modal-action border-t border-white/[0.06] pt-3.5">
+          <button className="btn btn-sm btn-primary rounded-lg px-5 font-medium" onClick={onClose}>
             Close
           </button>
         </div>
@@ -216,7 +216,7 @@ export default function Dashboard() {
           <MagnetButton
             onClick={handleQuickTrim}
             disabled={trimming}
-            className="btn btn-sm btn-primary rounded-full px-6 py-2.5 flex items-center gap-2 shadow-lg shadow-blue-500/35 font-bold"
+            className="btn btn-sm btn-primary rounded-lg px-4 py-2 flex items-center gap-2 font-medium shadow-sm"
           >
             {trimming ? (
               <span className="loading loading-spinner loading-xs"></span>
@@ -224,20 +224,20 @@ export default function Dashboard() {
               <>
                 <Sparkles ref={trimIcon.ref} size={15} />
                 <span>Sub-Zero Quick Trim</span>
-                <ArrowRight size={15} />
+                <ArrowRight size={14} />
               </>
             )}
           </MagnetButton>
         }
       />
 
-      {/* Glacial Health Hero Banner with SpotlightCard & Volumetric Light Overlay */}
-      <SpotlightCard className="p-6 border border-blue-500/30 bg-gradient-to-r from-blue-950/40 via-slate-900/50 to-sky-950/40">
+      {/* Glacial Health Hero Banner */}
+      <SpotlightCard className="p-6 border border-white/[0.08] bg-slate-900/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] rounded-2xl">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-5">
             <div className="relative flex items-center justify-center shrink-0">
               <svg className="w-24 h-24 transform -rotate-90">
-                <circle cx="48" cy="48" r="38" stroke="currentColor" strokeWidth="8" className="text-slate-900" fill="transparent" />
+                <circle cx="48" cy="48" r="38" stroke="currentColor" strokeWidth="8" className="text-slate-950" fill="transparent" />
                 <circle
                   cx="48"
                   cy="48"
@@ -247,36 +247,46 @@ export default function Dashboard() {
                   strokeDasharray="238.76"
                   strokeDashoffset={238.76 * (1 - healthScore / 100)}
                   strokeLinecap="round"
-                  className="text-blue-400 transition-all duration-1000 ease-out"
+                  className="text-blue-500 transition-all duration-1000 ease-out"
                   fill="transparent"
                 />
               </svg>
               <div className="absolute text-center">
-                <span className="text-2xl font-black font-mono text-blue-400">
+                <span className="text-2xl font-extrabold font-mono text-white">
                   <CountUp to={healthScore} suffix="%" />
                 </span>
-                <span className="text-[9px] uppercase font-bold text-slate-400 block">Index</span>
+                <span className="text-[9px] uppercase font-bold tracking-wider text-slate-400 block">Index</span>
               </div>
             </div>
 
             <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-black text-white tracking-tight">Glacial Performance Index</h3>
-                <span className="badge badge-sm badge-success gap-1 font-semibold rounded-full px-3">
-                  <CheckCircle2 size={11} /> {healthScore >= 75 ? "Optimal" : healthScore >= 50 ? "Moderate" : "High Load"}
+              <div className="flex items-center gap-2.5">
+                <h3 className="text-base font-bold text-white tracking-tight">Glacial Performance Index</h3>
+                <span className={`text-xs font-semibold rounded-md px-2 py-0.5 border flex items-center gap-1 ${
+                  healthScore >= 75
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                    : healthScore >= 50
+                    ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                    : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                }`}>
+                  <CheckCircle2 size={12} /> {healthScore >= 75 ? "Optimal" : healthScore >= 50 ? "Moderate" : "High Load"}
                 </span>
               </div>
-              <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
+              <p className="text-xs text-slate-400 max-w-xl leading-relaxed">
                 Calculated live from CPU workload, RAM allocation, and storage status. Click Sub-Zero Quick Trim to reclaim idle resources instantly.
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <button className="btn btn-sm btn-outline rounded-full px-5 border-blue-500/40 text-blue-300 flex items-center gap-2" onClick={handleQuickTrim} disabled={trimming}>
-              <Zap size={14} />
+            <button
+              className="btn btn-sm btn-outline rounded-lg px-4 border-white/10 hover:border-white/20 hover:bg-white/5 text-slate-200 flex items-center gap-2 font-medium transition-all"
+              onClick={handleQuickTrim}
+              disabled={trimming}
+            >
+              <Zap size={14} className="text-blue-400" />
               <span>Reclaim Idle RAM</span>
-              <ArrowRight size={14} />
+              <ArrowRight size={13} />
             </button>
           </div>
         </div>
@@ -286,9 +296,9 @@ export default function Dashboard() {
         <MetricCard
           icon={Cpu}
           label="CPU Load"
-          value={`${stats.cpu.loadPercent}%`}
+          value={`${Math.round(stats.cpu.loadPercent)}%`}
           sub={`${stats.cpu.cores} cores · ${stats.cpu.model} (click for per-core)`}
-          progress={stats.cpu.loadPercent}
+          progress={Math.round(stats.cpu.loadPercent)}
           warnAt={80}
           onClick={() => setDetailModal("cpu")}
         />
@@ -296,9 +306,9 @@ export default function Dashboard() {
         <MetricCard
           icon={MemoryStick}
           label="Memory Used"
-          value={`${stats.memory.usedPercent}%`}
+          value={`${Math.round(stats.memory.usedPercent)}%`}
           sub={`${formatBytes(stats.memory.usedBytes)} / ${formatBytes(stats.memory.totalBytes)} (click for process list)`}
-          progress={stats.memory.usedPercent}
+          progress={Math.round(stats.memory.usedPercent)}
           warnAt={80}
           onClick={() => setDetailModal("memory")}
         />
@@ -307,9 +317,9 @@ export default function Dashboard() {
           <MetricCard
             icon={Gpu}
             label="GPU Load"
-            value={`${gpu.loadPercent}%`}
+            value={`${Math.round(gpu.loadPercent)}%`}
             sub={`${gpu.name} · ${gpu.temperatureC}°C`}
-            progress={gpu.loadPercent}
+            progress={Math.round(gpu.loadPercent)}
             warnAt={80}
           />
         ) : (
@@ -319,8 +329,8 @@ export default function Dashboard() {
 
       <div className="pt-2 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold tracking-tight uppercase text-slate-300 flex items-center gap-2">
-            <HardDrive size={16} className="text-blue-400" /> Storage Drives ({stats.disks.length})
+          <h3 className="text-xs font-semibold tracking-wider uppercase text-slate-400 flex items-center gap-2">
+            <HardDrive size={15} className="text-blue-400" /> Storage Drives ({stats.disks.length})
           </h3>
           <span className="text-xs text-slate-400">Auto-refreshed periodically</span>
         </div>
@@ -329,14 +339,12 @@ export default function Dashboard() {
           {stats.disks.map((d) => {
             const diskWarn = d.usedPercent >= 80;
             return (
-              <SpotlightCard key={d.mount} className="p-5 space-y-3 glass-card-hover">
+              <SpotlightCard key={d.mount} className="p-5 space-y-3 glass-card-hover rounded-2xl border border-white/[0.08]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-2xl bg-blue-500/15 text-blue-400 border border-blue-500/30">
-                      <HardDrive size={16} />
-                    </div>
+                    <HardDrive size={20} className="text-blue-400 shrink-0" />
                     <div>
-                      <span className="font-bold text-base text-white">{d.mount} Drive</span>
+                      <span className="font-semibold text-sm text-white">{d.mount} Drive</span>
                       <p className="text-xs text-slate-400">
                         {formatBytes(d.usedBytes)} used of {formatBytes(d.totalBytes)}
                       </p>
@@ -344,12 +352,12 @@ export default function Dashboard() {
                   </div>
 
                   <span
-                    className={`badge badge-sm gap-1 font-semibold rounded-full ${
+                    className={`text-xs font-medium rounded-md px-2 py-0.5 border flex items-center gap-1 ${
                       d.healthStatus === "Healthy"
-                        ? "badge-success bg-success/15 text-success border-success/30"
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                         : d.healthStatus === "Unknown"
-                        ? "badge-ghost opacity-70"
-                        : "badge-error bg-error/15 text-error border-error/30"
+                        ? "bg-white/[0.04] text-slate-400 border-white/[0.06]"
+                        : "bg-rose-500/10 text-rose-400 border-rose-500/20"
                     }`}
                   >
                     {d.healthStatus === "Unknown" ? <ShieldQuestion size={12} /> : <HeartPulse size={12} />}
@@ -357,23 +365,23 @@ export default function Dashboard() {
                   </span>
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <div className="flex justify-between text-xs font-medium">
                     <span className="text-slate-400">Space Allocation</span>
-                    <span className={`font-mono ${diskWarn ? "text-warning" : "text-blue-400 font-bold"}`}>
-                      {d.usedPercent}% Used
+                    <span className={`font-mono ${diskWarn ? "text-amber-400 font-semibold" : "text-blue-400 font-semibold"}`}>
+                      {Math.round(d.usedPercent)}% Used
                     </span>
                   </div>
                   <progress
-                    className={`progress w-full h-2 rounded-full ${diskWarn ? "progress-warning" : "progress-primary"}`}
-                    value={d.usedPercent}
+                    className={`progress w-full h-1.5 rounded-full ${diskWarn ? "progress-warning" : "progress-primary"}`}
+                    value={Math.round(d.usedPercent)}
                     max="100"
                   ></progress>
                 </div>
 
                 <div className="pt-2 flex justify-end">
                   <button
-                    className="btn btn-xs btn-outline rounded-full px-4 text-blue-300 border-blue-500/30 hover:bg-blue-500/10 flex items-center gap-1.5"
+                    className="btn btn-xs btn-outline rounded-lg px-3 py-1 text-slate-300 border-white/10 hover:border-white/20 hover:bg-white/5 flex items-center gap-1.5 font-medium transition-all"
                     onClick={() => setOptimizeTarget(d.mount)}
                     disabled={optimizing.has(d.mount)}
                   >

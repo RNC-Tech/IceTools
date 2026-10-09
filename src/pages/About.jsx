@@ -79,19 +79,17 @@ export default function About() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* App Hero Card */}
-        <div className="glass-card rounded-2xl p-6 flex flex-col justify-between space-y-4 border border-blue-500/20 shadow-xl">
+        <div className="glass-card rounded-2xl p-6 flex flex-col justify-between space-y-4 border border-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] shadow-xl">
           <div className="flex items-start gap-4">
-            <div className="p-3 rounded-2xl bg-blue-500/15 border border-blue-500/30 shadow-lg shadow-blue-500/20 shrink-0">
-              <img src="./icetools.svg" alt="IceTools Logo" className="w-10 h-10 object-contain" />
-            </div>
+            <img src="./icetools.svg" alt="IceTools Logo" className="w-12 h-12 object-contain shrink-0" />
             <div>
               <h3 className="text-2xl font-black text-white tracking-tight">IceTools</h3>
               <p className="text-xs text-blue-400 font-semibold tracking-wide uppercase">Sub-Zero Windows Optimizer</p>
               <div className="flex items-center gap-2 mt-2">
-                <span className="badge badge-sm bg-blue-500/20 text-blue-300 border-blue-500/30 font-mono font-bold px-2.5">
+                <span className="text-[11px] rounded-md bg-blue-500/10 text-blue-300 border border-blue-500/20 font-mono font-semibold px-2 py-0.5">
                   {version ? `v${version}` : "v1.0.0"}
                 </span>
-                <span className="badge badge-sm bg-emerald-500/15 text-emerald-400 border-emerald-500/30 font-semibold">
+                <span className="text-[11px] rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold px-2 py-0.5">
                   Official Build
                 </span>
               </div>
@@ -121,7 +119,7 @@ export default function About() {
 
           <div className="space-y-2.5 pt-2">
             <button
-              className="btn btn-sm btn-disabled opacity-50 cursor-not-available rounded-full w-full gap-2 font-semibold text-slate-400 border-slate-700 bg-slate-800/40"
+              className="btn btn-sm btn-disabled opacity-50 cursor-not-available rounded-lg w-full gap-2 font-medium text-slate-400 border-slate-700 bg-slate-800/40"
               disabled
               title="In-app automatic background check is disabled"
             >
@@ -130,7 +128,7 @@ export default function About() {
             </button>
 
             <button
-              className="btn btn-sm btn-primary rounded-full w-full gap-2 font-bold shadow-lg shadow-blue-500/30"
+              className="btn btn-sm btn-primary rounded-lg w-full gap-2 font-medium shadow-sm"
               onClick={handleOpenGitHubReleases}
             >
               <ExternalLink size={14} />
@@ -141,7 +139,7 @@ export default function About() {
       </div>
 
       {/* Feature Highlights */}
-      <div className="glass-card rounded-2xl p-5 border border-blue-500/15 space-y-3 shadow-xl">
+      <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-3 shadow-xl">
         <h4 className="font-bold text-sm text-white flex items-center gap-2">
           <Zap size={16} className="text-amber-400" /> Key Features & Capabilities
         </h4>

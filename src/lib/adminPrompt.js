@@ -18,6 +18,9 @@ const ADMIN_ERROR_PATTERNS = [
   "requested registry access is not allowed",
   "administrator",
   "administrative",
+  "couldnotstopservice",
+  "servicecommandexception",
+  "privilege",
 ];
 
 export function isAdminError(message) {

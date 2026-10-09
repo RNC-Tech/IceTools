@@ -261,7 +261,7 @@ export default function YtDlpDownloader() {
 
             <div className="space-y-2">
               <input
-                className="input input-bordered w-full rounded-xl bg-slate-900/60 border-blue-500/20 text-xs text-white font-mono placeholder:text-slate-500 focus:border-blue-500/50"
+                className="input input-bordered w-full rounded-lg bg-slate-900/60 border-white/[0.08] text-xs text-white font-mono placeholder:text-slate-500 focus:border-blue-500/50"
                 placeholder="Paste video URL (YouTube, Vimeo, Twitter, etc.)..."
                 value={url}
                 onChange={handleUrlChange}
@@ -270,9 +270,9 @@ export default function YtDlpDownloader() {
             </div>
 
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-2">
+              <div className="inline-flex p-1 bg-black/25 rounded-xl border border-white/[0.06] gap-1">
                 <button
-                  className={`btn btn-xs rounded-full px-3.5 ${mode === "video" ? "btn-primary" : "btn-ghost text-slate-300"}`}
+                  className={`btn btn-xs rounded-lg px-3 font-medium transition-all ${mode === "video" ? "bg-blue-600 text-white font-semibold shadow-sm" : "btn-ghost text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"}`}
                   onClick={() => {
                     setMode("video");
                     setFormatId("");
@@ -282,7 +282,7 @@ export default function YtDlpDownloader() {
                   <Video size={13} /> Video (MP4)
                 </button>
                 <button
-                  className={`btn btn-xs rounded-full px-3.5 ${mode === "audio" ? "btn-primary" : "btn-ghost text-slate-300"}`}
+                  className={`btn btn-xs rounded-lg px-3 font-medium transition-all ${mode === "audio" ? "bg-blue-600 text-white font-semibold shadow-sm" : "btn-ghost text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"}`}
                   onClick={() => {
                     setMode("audio");
                     setFormatId("");
@@ -295,7 +295,7 @@ export default function YtDlpDownloader() {
 
               <div className="flex items-center gap-2">
                 <button
-                  className="btn btn-xs btn-outline rounded-full px-3.5 gap-1 border-blue-500/30 text-blue-300"
+                  className="btn btn-xs btn-outline rounded-lg px-3 gap-1 border-white/10 text-slate-300 hover:border-white/20 hover:bg-white/5 font-medium"
                   onClick={handleCheckFormats}
                   disabled={downloading || fetchingFormats}
                 >
@@ -304,7 +304,7 @@ export default function YtDlpDownloader() {
                 </button>
 
                 <button
-                  className="btn btn-sm btn-primary rounded-full px-5 gap-2 shadow-lg shadow-blue-500/30 font-bold"
+                  className="btn btn-sm btn-primary rounded-lg px-4 gap-2 font-medium shadow-sm"
                   onClick={handleDownload}
                   onMouseEnter={downloadIconHover.onMouseEnter}
                   onMouseLeave={downloadIconHover.onMouseLeave}
@@ -322,7 +322,7 @@ export default function YtDlpDownloader() {
 
             {formats && (
               <select
-                className="select select-sm select-bordered w-full rounded-xl bg-slate-900/60 border-blue-500/20 text-xs text-slate-200 font-mono"
+                className="select select-sm select-bordered w-full rounded-lg bg-slate-900/60 border-white/[0.08] text-xs text-slate-200 font-mono"
                 value={formatId}
                 onChange={(e) => setFormatId(e.target.value)}
                 disabled={downloading}

@@ -22,10 +22,10 @@ export default function MetricCard({
     : "progress-primary";
 
   const iconColorClass = isHigh
-    ? "text-rose-400 bg-rose-500/15 border-rose-500/30"
+    ? "text-rose-400"
     : isWarn
-    ? "text-amber-300 bg-amber-500/15 border-amber-500/30"
-    : "text-blue-400 bg-blue-500/15 border-blue-500/30";
+    ? "text-amber-400"
+    : "text-blue-400";
 
   return (
     <SpotlightCard
@@ -34,25 +34,23 @@ export default function MetricCard({
     >
       <div>
         <div className="flex items-center justify-between gap-2 mb-3">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-300">
+          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-slate-400">
             {IconComponent && (
-              <div className={`p-1.5 rounded-xl border ${iconColorClass}`}>
-                <AnimatedIcon icon={IconComponent} size={15} />
-              </div>
+              <AnimatedIcon icon={IconComponent} size={16} className={`${iconColorClass} shrink-0`} />
             )}
             <span>{label}</span>
           </div>
           {isHigh ? (
-            <span className="badge badge-xs badge-error gap-1 font-bold rounded-full">Critical</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-md px-2 py-0.5">Critical</span>
           ) : isWarn ? (
-            <span className="badge badge-xs badge-warning gap-1 font-bold rounded-full">High</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-md px-2 py-0.5">High</span>
           ) : typeof progress === "number" ? (
-            <span className="badge badge-xs badge-ghost opacity-60 font-medium rounded-full">Optimal</span>
+            <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400 bg-white/[0.04] border border-white/[0.06] rounded-md px-2 py-0.5">Optimal</span>
           ) : null}
         </div>
 
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-black tracking-tight text-white">{value}</span>
+          <span className="text-3xl font-extrabold font-mono tracking-tight text-white">{value}</span>
         </div>
 
         {sub && <p className="text-xs text-slate-400 mt-1 leading-normal">{sub}</p>}

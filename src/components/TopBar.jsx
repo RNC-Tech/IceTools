@@ -45,67 +45,67 @@ export default function TopBar({ isAdmin }) {
   }
 
   return (
-    <header className="h-14 shrink-0 border-b border-blue-500/15 bg-[#070f1e]/80 backdrop-blur-md px-4 flex items-center justify-between window-drag-region select-none border-t-0 border-x-0">
+    <header className="h-[52px] shrink-0 border-b border-white/[0.06] bg-[#070e1b]/80 backdrop-blur-md px-4 flex items-center justify-between window-drag-region select-none">
       {/* Merged IceLogo Header on Top Left */}
       <div className="flex items-center gap-3 window-no-drag">
         <IceLogo size="sm" showSubtitle={true} />
       </div>
 
       {/* Right Action Tools & Frameless Window Control Buttons */}
-      <div className="flex items-center gap-3 window-no-drag">
+      <div className="flex items-center gap-2.5 window-no-drag">
         <MagnetButton
           onClick={handleQuickTrim}
           disabled={trimming}
-          className="btn btn-xs btn-primary rounded-full px-4 py-1.5 flex items-center gap-1.5 shadow-lg shadow-blue-500/30 text-xs font-bold"
+          className="btn btn-xs btn-primary rounded-lg px-3 py-1.5 flex items-center gap-1.5 text-xs font-semibold"
         >
           {trimming ? (
             <span className="loading loading-spinner loading-xs"></span>
           ) : (
             <>
-              <Sparkles size={13} />
+              <Sparkles size={12} />
               <span>Sub-Zero Trim</span>
-              <ArrowRight size={13} />
+              <ArrowRight size={12} />
             </>
           )}
         </MagnetButton>
 
         {isAdmin ? (
-          <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30">
+          <div className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
             <ShieldCheck size={12} />
             <span>Elevated Admin</span>
           </div>
         ) : (
           <button
-            className="btn btn-xs btn-outline rounded-full px-3 text-[11px] flex items-center gap-1"
+            className="btn btn-xs btn-outline rounded-lg px-2.5 py-1 text-[11px] font-medium flex items-center gap-1.5 text-slate-300 hover:text-white"
             onClick={() => setConfirmAdminOpen(true)}
           >
-            <ShieldAlert size={12} />
+            <ShieldAlert size={12} className="text-amber-400" />
             <span>Restart as Admin</span>
           </button>
         )}
 
         {/* Custom Window Controls Divider */}
-        <div className="h-4 w-px bg-blue-500/20 mx-1"></div>
+        <div className="h-4 w-px bg-white/[0.08] mx-1"></div>
 
         {/* Custom Window Control Buttons */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           <button
             onClick={handleMinimize}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors"
+            className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors"
             title="Minimize"
           >
             <Minus size={13} />
           </button>
           <button
             onClick={handleMaximize}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors"
+            className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors"
             title="Maximize / Restore"
           >
             <Square size={12} />
           </button>
           <button
             onClick={handleClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 transition-colors"
+            className="p-1.5 rounded-md text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 transition-colors"
             title="Close"
           >
             <X size={13} />

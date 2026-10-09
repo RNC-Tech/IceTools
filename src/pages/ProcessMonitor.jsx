@@ -84,7 +84,7 @@ export default function ProcessMonitor() {
         <div className="relative w-full sm:w-80">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
-            className="input input-sm input-bordered w-full pl-9 rounded-xl bg-slate-900/60 border-blue-500/20 text-xs text-white"
+            className="input input-sm input-bordered w-full pl-9 rounded-lg bg-slate-900/60 border-white/[0.08] text-xs text-white placeholder:text-slate-500 focus:border-blue-500/50"
             placeholder="Search processes or PID..."
             value={filter}
             onChange={(e) => setSearch(e.target.value)}
@@ -92,35 +92,37 @@ export default function ProcessMonitor() {
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto justify-end text-xs">
-          <span className="text-slate-400">Sort By:</span>
-          <button
-            className={`btn btn-xs rounded-full px-3 ${sortBy === "memory" ? "btn-primary" : "btn-ghost text-slate-300"}`}
-            onClick={() => setSortBy("memory")}
-          >
-            <MemoryStick size={12} /> Memory
-          </button>
-          <button
-            className={`btn btn-xs rounded-full px-3 ${sortBy === "cpu" ? "btn-primary" : "btn-ghost text-slate-300"}`}
-            onClick={() => setSortBy("cpu")}
-          >
-            <Cpu size={12} /> CPU
-          </button>
-          <button
-            className={`btn btn-xs rounded-full px-3 ${sortBy === "name" ? "btn-primary" : "btn-ghost text-slate-300"}`}
-            onClick={() => setSortBy("name")}
-          >
-            Name
-          </button>
+          <span className="text-slate-400 font-medium">Sort:</span>
+          <div className="inline-flex p-1 bg-black/25 rounded-xl border border-white/[0.06] gap-1">
+            <button
+              className={`btn btn-xs rounded-lg px-3 font-medium transition-all ${sortBy === "memory" ? "bg-blue-600 text-white font-semibold shadow-sm" : "btn-ghost text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"}`}
+              onClick={() => setSortBy("memory")}
+            >
+              <MemoryStick size={12} /> Memory
+            </button>
+            <button
+              className={`btn btn-xs rounded-lg px-3 font-medium transition-all ${sortBy === "cpu" ? "bg-blue-600 text-white font-semibold shadow-sm" : "btn-ghost text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"}`}
+              onClick={() => setSortBy("cpu")}
+            >
+              <Cpu size={12} /> CPU
+            </button>
+            <button
+              className={`btn btn-xs rounded-lg px-3 font-medium transition-all ${sortBy === "name" ? "bg-blue-600 text-white font-semibold shadow-sm" : "btn-ghost text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"}`}
+              onClick={() => setSortBy("name")}
+            >
+              Name
+            </button>
+          </div>
         </div>
       </div>
 
       {loading ? (
         <TableSkeleton rows={8} columns={6} />
       ) : (
-        <div className="glass-card rounded-2xl overflow-hidden border border-blue-500/15 shadow-xl">
+        <div className="glass-card rounded-2xl overflow-hidden border border-white/[0.08] shadow-xl">
           <div className="overflow-x-auto max-h-[60vh]">
             <table className="table table-sm w-full">
-              <thead className="bg-[#0b172a]/90 text-xs text-slate-300 sticky top-0 backdrop-blur-md border-b border-blue-500/20">
+              <thead className="bg-slate-900/90 text-xs text-slate-300 sticky top-0 backdrop-blur-md border-b border-white/[0.06]">
                 <tr>
                   <th className="w-20">PID</th>
                   <th>Process Name</th>
@@ -144,7 +146,7 @@ export default function ProcessMonitor() {
                     </td>
                     <td className="text-right font-mono text-xs font-semibold">
                       {p.cpu > 0 ? (
-                        <span className="text-amber-400 font-bold">{p.cpu}%</span>
+                        <span className="text-amber-400 font-bold">{Math.round(p.cpu)}%</span>
                       ) : (
                         <span className="text-slate-500">0%</span>
                       )}

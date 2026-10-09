@@ -105,7 +105,7 @@ export default function MemoryCleaner() {
         badge="RAM Optimizer"
         actions={
           <button
-            className="btn btn-sm btn-primary rounded-full px-5 gap-2 shadow-lg shadow-blue-500/30 font-bold"
+            className="btn btn-sm btn-primary rounded-lg px-4 py-2 gap-2 shadow-sm font-medium"
             onClick={() => runClean([])}
             onMouseEnter={trimIcon.onMouseEnter}
             onMouseLeave={trimIcon.onMouseLeave}
@@ -121,7 +121,7 @@ export default function MemoryCleaner() {
         <MetricCard
           icon={MemoryStick}
           label="RAM Usage"
-          value={memoryPercent === null ? "—" : `${memoryPercent}%`}
+          value={memoryPercent === null ? "—" : `${Math.round(memoryPercent)}%`}
           sub="Live System RAM load"
           progress={memoryPercent ?? 0}
           warnAt={80}
@@ -154,7 +154,7 @@ export default function MemoryCleaner() {
           <button className="btn btn-xs btn-ghost text-slate-300 hover:text-white" onClick={clearSelection} disabled={selected.size === 0}>
             Clear
           </button>
-          <button className="btn btn-xs btn-outline rounded-full px-3.5 border-blue-500/30 text-blue-300" onClick={loadApps} disabled={loading}>
+          <button className="btn btn-xs btn-outline rounded-lg px-3 border-white/10 text-slate-300 hover:border-white/20 hover:bg-white/5" onClick={loadApps} disabled={loading}>
             Rescan Apps
           </button>
         </div>
@@ -163,10 +163,10 @@ export default function MemoryCleaner() {
       {loading ? (
         <TableSkeleton rows={6} columns={4} />
       ) : (
-        <div className="glass-card rounded-2xl overflow-hidden border border-blue-500/15 shadow-xl">
+        <div className="glass-card rounded-2xl overflow-hidden border border-white/[0.08] shadow-xl">
           <div className="overflow-x-auto max-h-[45vh]">
             <table className="table table-sm w-full">
-              <thead className="bg-[#0b172a]/90 text-xs text-slate-300 sticky top-0 backdrop-blur-md border-b border-blue-500/20">
+              <thead className="bg-slate-900/90 text-xs text-slate-300 sticky top-0 backdrop-blur-md border-b border-white/[0.06]">
                 <tr>
                   <th className="w-10"></th>
                   <th>Application Name</th>
@@ -220,7 +220,7 @@ export default function MemoryCleaner() {
       )}
 
       {/* Action Footer */}
-      <div className="glass-card rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border border-blue-500/20 bg-[#0b172a]/95 shadow-xl">
+      <div className="glass-card rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border border-white/[0.08] bg-slate-900/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] shadow-xl">
         <div className="text-xs text-slate-300 flex items-center gap-2">
           <ShieldCheck size={16} className="text-blue-400 shrink-0" />
           <span>
@@ -232,7 +232,7 @@ export default function MemoryCleaner() {
 
         <div className="flex gap-2 w-full sm:w-auto">
           <button
-            className="btn btn-error btn-sm rounded-full px-5 gap-2 w-full sm:w-auto shadow-lg shadow-rose-500/25 font-bold"
+            className="btn btn-error btn-sm rounded-lg px-4 gap-2 w-full sm:w-auto font-medium shadow-sm"
             disabled={selected.size === 0 || working}
             onClick={() => setConfirmOpen(true)}
           >

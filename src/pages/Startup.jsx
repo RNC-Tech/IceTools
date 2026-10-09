@@ -30,7 +30,7 @@ export default function Startup() {
 
   async function handleToggle(item) {
     try {
-      await call(window.api.startup.toggle({ id: item.id, enabled: !item.enabled }));
+      await call(window.api.startup.toggle({ ...item, enabled: !item.enabled }));
       toast.success(`${!item.enabled ? "Enabled" : "Disabled"} "${item.name}"`);
       load();
     } catch (err) {

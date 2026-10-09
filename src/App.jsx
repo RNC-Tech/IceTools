@@ -81,7 +81,7 @@ export default function App() {
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 className="h-full"
               >
-                <Page />
+                <Page isAdmin={isAdmin} />
               </motion.div>
             </AnimatePresence>
           </div>

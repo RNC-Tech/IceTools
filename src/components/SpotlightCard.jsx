@@ -3,7 +3,7 @@ import React, { useRef, useState } from "react";
 export default function SpotlightCard({
   children,
   className = "",
-  spotlightColor = "rgba(59, 130, 246, 0.18)",
+  spotlightColor = "rgba(59, 130, 246, 0.08)",
   onClick,
 }) {
   const divRef = useRef(null);
@@ -26,7 +26,7 @@ export default function SpotlightCard({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={onClick}
-      className={`relative overflow-hidden rounded-2xl border border-blue-500/15 bg-[#0B1528]/60 backdrop-blur-xl transition-all duration-300 ${
+      className={`relative overflow-hidden rounded-2xl border border-white/[0.08] bg-slate-900/60 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-300 ${
         onClick ? "cursor-pointer" : ""
       } ${className}`}
     >

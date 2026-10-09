@@ -1,24 +1,79 @@
-import React from "react";
-import { motion } from "motion/react";
+"use client";
+import React, { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import { motion, useAnimation } from "motion/react";
 
-// A lightweight, generic stand-in for lucide-animated.com's bespoke
-// per-icon Motion components: that project ships a hand-tuned animation per
-// icon via a shadcn-style registry (no npm package, and its CLI wants to
-// bootstrap its own Tailwind theme/path-alias scaffold, which would fight
-// with this app's existing DaisyUI theme system). This wraps any existing
-// lucide-react icon with the same underlying library (Motion) and a tasteful
-// hover animation instead, so every icon in the app gets the same animated
-// feel without adopting a second, conflicting component system.
-export default function AnimatedIcon({ icon: Icon, size = 16, className = "", spin = false, ...props }) {
-  return (
-    <motion.span
-      className={`inline-flex ${className}`}
-      style={{ display: "inline-flex" }}
-      whileHover={{ scale: 1.15, rotate: spin ? 15 : 0 }}
-      whileTap={{ scale: 0.9 }}
-      transition={{ type: "spring", stiffness: 400, damping: 15 }}
-    >
-      <Icon size={size} {...props} />
-    </motion.span>
-  );
-}
+const ICON_VARIANTS = {
+  normal: {
+    rotate: 0,
+    y: 0,
+    transition: { duration: 0.2, ease: "easeOut" },
+  },
+  animate: {
+    rotate: [0, -10, 10, -4, 4, 0],
+    y: [0, -1.5, 0],
+    transition: { duration: 0.45, ease: "easeInOut" },
+  },
+};
+
+const AnimatedIcon = forwardRef(
+  ({ icon: Icon, size = 16, className = "", onMouseEnter, onMouseLeave, ...props }, ref) => {
+    if (!Icon) return null;
+
+    const controls = useAnimation();
+    const innerRef = useRef(null);
+
+    const startAnimation = useCallback(() => {
+      if (innerRef.current?.startAnimation) {
+        innerRef.current.startAnimation();
+      } else {
+        controls.start("animate");
+      }
+    }, [controls]);
+
+    const stopAnimation = useCallback(() => {
+      if (innerRef.current?.stopAnimation) {
+        innerRef.current.stopAnimation();
+      } else {
+        controls.start("normal");
+      }
+    }, [controls]);
+
+    useImperativeHandle(ref, () => ({
+      startAnimation,
+      stopAnimation,
+    }));
+
+    const handleMouseEnter = useCallback(
+      (e) => {
+        startAnimation();
+        onMouseEnter?.(e);
+      },
+      [startAnimation, onMouseEnter]
+    );
+
+    const handleMouseLeave = useCallback(
+      (e) => {
+        stopAnimation();
+        onMouseLeave?.(e);
+      },
+      [stopAnimation, onMouseLeave]
+    );
+
+    return (
+      <motion.span
+        className={`inline-flex items-center justify-center ${className}`}
+        style={{ display: "inline-flex" }}
+        animate={controls}
+        initial="normal"
+        variants={ICON_VARIANTS}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        <Icon ref={innerRef} size={size} {...props} />
+      </motion.span>
+    );
+  }
+);
+
+AnimatedIcon.displayName = "AnimatedIcon";
+export default AnimatedIcon;

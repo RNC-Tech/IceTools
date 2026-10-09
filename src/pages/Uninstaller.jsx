@@ -103,7 +103,8 @@ export default function Uninstaller() {
     const items = leftovers.filter((_, i) => selectedLeftovers.has(i));
     setWorking(true);
     try {
-      const outcomes = await call(window.api.uninstaller.deleteLeftovers(items));
+      const res = await call(window.api.uninstaller.deleteLeftovers(items));
+      const outcomes = Array.isArray(res) ? res : [{ success: Boolean(res?.success ?? true) }];
       const failed = outcomes.filter((o) => !o.success);
       if (failed.length === 0) {
         toast.success(`Removed ${outcomes.length} leftover item(s).`);
@@ -154,7 +155,7 @@ export default function Uninstaller() {
           <button className="btn btn-xs btn-ghost text-slate-300 hover:text-white" onClick={clearSelection} disabled={selected.size === 0}>
             Clear
           </button>
-          <button className="btn btn-xs btn-outline rounded-full px-3 border-blue-500/30 text-blue-300" onClick={loadApps} disabled={loading || working}>
+          <button className="btn btn-xs btn-outline rounded-lg px-3 border-white/10 text-slate-300 hover:border-white/20 hover:bg-white/5 font-medium" onClick={loadApps} disabled={loading || working}>
             Rescan
           </button>
         </div>
@@ -163,10 +164,10 @@ export default function Uninstaller() {
       {loading ? (
         <TableSkeleton rows={8} columns={5} />
       ) : (
-        <div className="glass-card rounded-2xl overflow-hidden border border-blue-500/15 shadow-xl">
+        <div className="glass-card rounded-2xl overflow-hidden border border-white/[0.08] shadow-xl">
           <div className="overflow-x-auto max-h-[50vh]">
             <table className="table table-sm w-full">
-              <thead className="bg-[#0b172a]/90 text-xs text-slate-300 sticky top-0 backdrop-blur-md border-b border-blue-500/20">
+              <thead className="bg-slate-900/90 text-xs text-slate-300 sticky top-0 backdrop-blur-md border-b border-white/[0.06]">
                 <tr>
                   <th className="w-10"></th>
                   <th>Application</th>
@@ -259,7 +260,7 @@ export default function Uninstaller() {
               Dismiss
             </button>
             <button
-              className="btn btn-xs btn-warning rounded-full px-3 gap-1"
+              className="btn btn-xs btn-warning rounded-lg px-3 gap-1 font-medium shadow-sm"
               onClick={() => setConfirmLeftoversOpen(true)}
               disabled={selectedLeftovers.size === 0 || working}
             >
@@ -271,7 +272,7 @@ export default function Uninstaller() {
       )}
 
       {/* Floating Action Bar */}
-      <div className="glass-card rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border border-blue-500/20 bg-[#0b172a]/95 shadow-xl">
+      <div className="glass-card rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border border-white/[0.08] bg-slate-900/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] shadow-xl">
         <div className="text-xs text-slate-300 flex items-center gap-2">
           <ShieldCheck size={16} className="text-blue-400 shrink-0" />
           <span>
@@ -282,7 +283,7 @@ export default function Uninstaller() {
         </div>
 
         <button
-          className="btn btn-error btn-sm rounded-full gap-2 px-6 shadow-lg shadow-rose-500/25"
+          className="btn btn-error btn-sm rounded-lg gap-2 px-5 font-medium shadow-sm"
           disabled={selected.size === 0 || working}
           onClick={() => setConfirmOpen(true)}
         >

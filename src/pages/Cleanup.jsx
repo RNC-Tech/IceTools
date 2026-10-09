@@ -57,12 +57,13 @@ export default function Cleanup() {
     setConfirmOpen(false);
     setCleaning(true);
     try {
-      const outcomes = await call(window.api.cleanup.clean(Array.from(selected)));
+      const res = await call(window.api.cleanup.clean(Array.from(selected)));
+      const outcomes = Array.isArray(res) ? res : [{ success: Boolean(res?.success ?? true) }];
       const failed = outcomes.filter((o) => !o.success);
       if (failed.length === 0) {
         toast.success("Selected junk categories cleaned successfully!");
       } else {
-        toast.error(`Some categories failed: ${failed.map((f) => f.id).join(", ")}`);
+        toast.error(`Some categories failed: ${failed.map((f) => f.id || "cleanup").join(", ")}`);
       }
       setSelected(new Set());
       await scan();
@@ -81,14 +82,14 @@ export default function Cleanup() {
         description="Scans and removes temporary files, system logs, cache leftovers, and Recycle Bin items."
         badge="Storage Optimizer"
         actions={
-          <button className="btn btn-sm btn-outline rounded-full px-4 gap-2 border-blue-500/30" onClick={scan} disabled={loading}>
+          <button className="btn btn-sm btn-outline rounded-lg px-4 gap-2 border-white/10 text-slate-200 hover:border-white/20 hover:bg-white/5 font-medium" onClick={scan} disabled={loading}>
             <RotateCw size={14} className={loading ? "animate-spin" : ""} />
             Rescan Junk
           </button>
         }
       />
 
-      <div className="glass-card p-4 rounded-2xl border border-blue-500/20 flex items-center justify-between gap-4">
+      <div className="glass-card p-4 rounded-2xl border border-white/[0.08] flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
           <ShieldCheck size={16} className="text-blue-400" />
           <span>All cleanup actions only target temporary caches and are 100% safe for your system.</span>
@@ -103,7 +104,7 @@ export default function Cleanup() {
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="p-4 rounded-2xl glass-card flex items-center justify-between">
+            <div key={i} className="p-4 rounded-2xl glass-card flex items-center justify-between border border-white/[0.08]">
               <div className="flex items-center gap-3">
                 <Skeleton className="h-5 w-5 rounded" />
                 <div className="space-y-1.5">
@@ -124,7 +125,7 @@ export default function Cleanup() {
                 key={c.id}
                 onClick={() => toggleSelected(c.id)}
                 className={`glass-card glass-card-hover rounded-2xl p-4 flex items-center justify-between cursor-pointer transition-all ${
-                  isChecked ? "border-blue-500/50 bg-blue-500/10" : "border-blue-500/15"
+                  isChecked ? "border-blue-500/40 bg-blue-500/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]" : "border-white/[0.08]"
                 }`}
               >
                 <div className="flex items-center gap-3.5">
@@ -137,7 +138,7 @@ export default function Cleanup() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-sm text-white">{c.label}</span>
-                      <span className="badge badge-xs bg-blue-500/20 text-blue-300 border-blue-500/30 text-[10px] uppercase font-semibold rounded-md">Safe</span>
+                      <span className="text-[10px] uppercase font-semibold rounded-md px-1.5 py-0.5 bg-blue-500/10 text-blue-300 border border-blue-500/20">Safe</span>
                     </div>
                     <p className="text-xs text-slate-400 mt-0.5">{c.description}</p>
                   </div>
@@ -158,11 +159,9 @@ export default function Cleanup() {
       )}
 
       {/* Floating Action Bar */}
-      <div className="glass-card rounded-2xl p-4 flex items-center justify-between border border-blue-500/30 bg-[#0b172a]/95 shadow-xl">
+      <div className="glass-card rounded-2xl p-4 flex items-center justify-between border border-white/[0.08] bg-slate-900/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] shadow-xl">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-blue-500/15 text-blue-400 border border-blue-500/30">
-            <HardDrive size={20} />
-          </div>
+          <HardDrive size={24} className="text-blue-400 shrink-0" />
           <div>
             <span className="text-xs text-slate-400 font-medium">Selected for Cleanup</span>
             <div className="text-lg font-black text-white font-mono">
@@ -173,7 +172,7 @@ export default function Cleanup() {
         </div>
 
         <button
-          className="btn btn-primary rounded-full gap-2 px-6 shadow-lg shadow-blue-500/30 font-bold"
+          className="btn btn-primary rounded-lg gap-2 px-5 font-medium shadow-sm"
           disabled={selected.size === 0 || cleaning}
           onClick={() => setConfirmOpen(true)}
         >

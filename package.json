@@ -9,6 +9,9 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
+    "tauri": "tauri",
+    "dev:tauri": "tauri dev",
+    "build:tauri": "tauri build",
     "dev:renderer": "vite",
     "dev:electron": "node electron/dev-launcher.cjs",
     "dev": "concurrently -k -n VITE,ELECTRON -c blue,green \"npm:dev:renderer\" \"npm run wait-and-start\"",
@@ -22,6 +25,7 @@
     "release": "npm run build:renderer && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --publish always"
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.11.1",
     "electron-updater": "^6.8.9",
     "lucide-react": "^1.27.0",
     "motion": "^12.42.2",
@@ -30,6 +34,7 @@
     "systeminformation": "^5.23.5"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.11.4",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "concurrently": "^9.1.2",

@@ -47,14 +47,14 @@ function SpeedTestWebModal({ modalUrl, title, onClose }) {
       <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md" onClick={onClose} />
       <div className="relative z-10 glass-card bg-[#070f1e]/95 border border-blue-500/25 rounded-2xl w-full max-w-5xl h-[88vh] p-5 shadow-2xl text-white flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-blue-500/20 pb-3 shrink-0">
+        <div className="flex items-center justify-between border-b border-white/[0.06] pb-3 shrink-0">
           <div className="flex items-center gap-2">
             <Gauge size={18} className="text-blue-400" />
             <h3 className="font-bold text-base text-white">{title}</h3>
           </div>
           <div className="flex items-center gap-2">
             <button
-              className="btn btn-xs btn-outline rounded-full px-3 gap-1 border-blue-500/30 text-blue-300 hover:text-white"
+              className="btn btn-xs btn-outline rounded-lg px-3 gap-1 border-white/10 text-slate-300 hover:border-white/20 hover:bg-white/5"
               onClick={handleExternalOpen}
               title="Open in default external browser"
             >
@@ -67,8 +67,8 @@ function SpeedTestWebModal({ modalUrl, title, onClose }) {
           </div>
         </div>
 
-        {/* Embedded Electron Webview */}
-        <div className="flex-1 my-3 rounded-xl overflow-hidden border border-blue-500/20 bg-slate-950">
+        {/* Embedded Webview */}
+        <div className="flex-1 my-3 rounded-xl overflow-hidden border border-white/[0.08] bg-slate-950">
           <webview
             src={modalUrl}
             className="w-full h-full border-none"
@@ -79,7 +79,7 @@ function SpeedTestWebModal({ modalUrl, title, onClose }) {
 
         {/* Footer with Exit Button Below */}
         <div className="pt-2 shrink-0 flex justify-end">
-          <button className="btn btn-sm btn-primary rounded-full px-6 font-bold shadow-lg shadow-blue-500/30" onClick={onClose}>
+          <button className="btn btn-sm btn-primary rounded-lg px-5 font-medium shadow-sm" onClick={onClose}>
             Exit Speed Test
           </button>
         </div>
@@ -121,12 +121,10 @@ function SpeedTestSection() {
   }
 
   return (
-    <div className="glass-card rounded-2xl p-5 border border-blue-500/20 space-y-4 shadow-xl">
+    <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-4 shadow-xl">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-2">
-          <div className="p-2.5 rounded-xl bg-blue-500/15 text-blue-400 border border-blue-500/30">
-            <Gauge size={18} />
-          </div>
+        <div className="flex items-center gap-3">
+          <Gauge size={20} className="text-blue-400 shrink-0" />
           <div>
             <h3 className="font-bold text-base text-white">Network Speed Test</h3>
             <p className="text-xs text-slate-400">Measure latency, download, and upload speeds or launch web providers</p>
@@ -135,7 +133,7 @@ function SpeedTestSection() {
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
-            className="btn btn-xs btn-outline rounded-full px-3.5 gap-1.5 border-blue-500/30 text-blue-300 hover:text-white"
+            className="btn btn-xs btn-outline rounded-lg px-3 gap-1.5 border-white/10 text-slate-300 hover:border-white/20 hover:bg-white/5"
             onClick={handleOpenFastCom}
             title="Open Fast.com speed test modal"
           >
@@ -144,7 +142,7 @@ function SpeedTestSection() {
           </button>
 
           <button
-            className="btn btn-xs btn-outline rounded-full px-3.5 gap-1.5 border-blue-500/30 text-blue-300 hover:text-white"
+            className="btn btn-xs btn-outline rounded-lg px-3 gap-1.5 border-white/10 text-slate-300 hover:border-white/20 hover:bg-white/5"
             onClick={handleOpenOokla}
             title="Open Speedtest.net speed test modal"
           >
@@ -153,7 +151,7 @@ function SpeedTestSection() {
           </button>
 
           <button
-            className="btn btn-sm btn-primary rounded-full px-5 gap-2 shadow-lg shadow-blue-500/30 font-bold"
+            className="btn btn-sm btn-primary rounded-lg px-4 gap-2 font-medium shadow-sm"
             onClick={runTest}
             disabled={testing}
           >
@@ -210,16 +208,14 @@ function BatterySection({ battery, showPercent, onToggleShowPercent }) {
   const Icon = batteryIcon(battery.percent, battery.isCharging);
 
   return (
-    <div className="glass-card rounded-2xl p-5 border border-blue-500/20 space-y-4 shadow-xl">
-      <div className="flex items-center gap-2">
-        <div className="p-2.5 rounded-xl bg-blue-500/15 text-blue-400 border border-blue-500/30">
-          <Icon size={18} />
-        </div>
+    <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-4 shadow-xl">
+      <div className="flex items-center gap-2.5">
+        <Icon size={20} className="text-blue-400 shrink-0" />
         <h3 className="font-bold text-base text-white">Laptop Battery & Power Health</h3>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-3.5 rounded-xl bg-slate-900/60 border border-blue-500/15">
+        <div className="p-3.5 rounded-xl bg-slate-900/60 border border-white/[0.06]">
           <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Battery Charge</div>
           <div className="text-2xl font-black font-mono text-blue-400">{battery.percent}%</div>
           <div className="text-xs text-slate-400">{battery.isCharging ? "Charging" : battery.acConnected ? "Plugged in" : "On battery"}</div>
@@ -478,10 +474,10 @@ export default function PowerNetwork() {
       {/* Power Plans */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold tracking-tight uppercase text-slate-300 flex items-center gap-2">
-            <Zap size={16} className="text-blue-400" /> Power Profiles
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+            <Zap size={15} className="text-blue-400" /> Power Profiles
           </h3>
-          <button className="btn btn-xs btn-outline rounded-full px-3.5 border-blue-500/30 text-blue-300" onClick={enableUltimate}>
+          <button className="btn btn-xs btn-outline rounded-lg px-3 border-white/10 text-slate-300 hover:border-white/20 hover:bg-white/5 font-medium" onClick={enableUltimate}>
             + Unlock Ultimate Performance
           </button>
         </div>
@@ -491,14 +487,14 @@ export default function PowerNetwork() {
             <div
               key={p.guid}
               className={`glass-card glass-card-hover rounded-2xl p-4 flex flex-col justify-between transition-all border ${
-                p.active ? "border-blue-500/50 bg-blue-500/10 shadow-md shadow-blue-500/10" : "border-blue-500/15"
+                p.active ? "border-blue-500/40 bg-blue-500/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]" : "border-white/[0.08]"
               }`}
             >
               <div>
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-sm text-white">{p.name}</span>
                   {p.active && (
-                    <span className="badge badge-xs bg-blue-500/20 text-blue-300 border-blue-500/30 gap-1 font-semibold rounded-md px-2 py-1">
+                    <span className="text-[10px] uppercase font-semibold rounded-md px-1.5 py-0.5 bg-blue-500/10 text-blue-300 border border-blue-500/20 gap-1 flex items-center">
                       <CheckCircle2 size={11} /> Active
                     </span>
                   )}
@@ -507,7 +503,7 @@ export default function PowerNetwork() {
 
               {!p.active && (
                 <div className="pt-3 flex justify-end">
-                  <button className="btn btn-xs btn-outline rounded-full px-3 border-blue-500/30 text-blue-300" onClick={() => activatePlan(p.guid)}>
+                  <button className="btn btn-xs btn-outline rounded-lg px-3 border-white/10 text-slate-300 hover:border-white/20 hover:bg-white/5 font-medium" onClick={() => activatePlan(p.guid)}>
                     Activate Profile
                   </button>
                 </div>
@@ -522,21 +518,21 @@ export default function PowerNetwork() {
       {/* Network Adapters */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold tracking-tight uppercase text-slate-300 flex items-center gap-2">
-            <Wifi size={16} className="text-blue-400" /> Network Adapters
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+            <Wifi size={15} className="text-blue-400" /> Network Adapters
           </h3>
           {wifiSignal && wifiSignal.available && (
-            <div className="flex items-center gap-2 text-xs font-semibold text-blue-300 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/30">
+            <div className="flex items-center gap-2 text-xs font-medium text-slate-300 bg-slate-900/60 px-2.5 py-0.5 rounded-md border border-white/[0.08]">
               {React.createElement(wifiSignalIcon(wifiSignal.signalPercent), { size: 14 })}
               <span>{wifiSignal.ssid} ({wifiSignal.signalPercent}%)</span>
             </div>
           )}
         </div>
 
-        <div className="glass-card rounded-2xl overflow-hidden border border-blue-500/15 shadow-xl">
+        <div className="glass-card rounded-2xl overflow-hidden border border-white/[0.08] shadow-xl">
           <div className="overflow-x-auto max-h-[45vh]">
             <table className="table table-sm w-full">
-              <thead className="bg-[#0b172a]/90 text-xs text-slate-300 sticky top-0 backdrop-blur-md border-b border-blue-500/20">
+              <thead className="bg-slate-900/90 text-xs text-slate-300 sticky top-0 backdrop-blur-md border-b border-white/[0.06]">
                 <tr>
                   <th>Adapter Name</th>
                   <th>Description</th>
@@ -564,10 +560,10 @@ export default function PowerNetwork() {
                     <td className="text-center font-mono text-xs text-slate-400">{a.linkSpeed}</td>
                     <td className="text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        <button className="btn btn-xs btn-outline rounded-full px-2.5 gap-1 border-blue-500/30 text-blue-300" onClick={() => setDnsAdapter(a)}>
+                        <button className="btn btn-xs btn-outline rounded-lg px-2.5 gap-1 border-white/10 text-slate-300 hover:border-white/20 hover:bg-white/5 font-medium" onClick={() => setDnsAdapter(a)}>
                           <Globe size={11} /> DNS
                         </button>
-                        <button className="btn btn-xs btn-outline rounded-full px-2.5 gap-1 border-blue-500/30 text-slate-300" onClick={() => toggleAdapter(a)}>
+                        <button className="btn btn-xs btn-outline rounded-lg px-2.5 gap-1 border-white/10 text-slate-300 hover:border-white/20 hover:bg-white/5 font-medium" onClick={() => toggleAdapter(a)}>
                           {a.status === "Up" ? "Disable" : "Enable"}
                         </button>
                       </div>
@@ -580,13 +576,13 @@ export default function PowerNetwork() {
         </div>
 
         <div className="flex items-center gap-2 pt-1 flex-wrap">
-          <button className="btn btn-xs btn-primary rounded-full px-4 gap-1 shadow-sm font-bold" onClick={flushDns}>
+          <button className="btn btn-xs btn-primary rounded-lg px-3.5 gap-1 shadow-sm font-medium" onClick={flushDns}>
             Flush DNS Cache
           </button>
-          <button className="btn btn-xs btn-outline rounded-full px-4 border-blue-500/30 text-blue-300" onClick={() => setResetConfirm("winsock")}>
+          <button className="btn btn-xs btn-outline rounded-lg px-3.5 border-white/10 text-slate-300 hover:border-white/20 hover:bg-white/5 font-medium" onClick={() => setResetConfirm("winsock")}>
             Reset Winsock Catalog
           </button>
-          <button className="btn btn-xs btn-outline rounded-full px-4 border-blue-500/30 text-blue-300" onClick={() => setResetConfirm("tcpip")}>
+          <button className="btn btn-xs btn-outline rounded-lg px-3.5 border-white/10 text-slate-300 hover:border-white/20 hover:bg-white/5 font-medium" onClick={() => setResetConfirm("tcpip")}>
             Reset TCP/IP Stack
           </button>
         </div>

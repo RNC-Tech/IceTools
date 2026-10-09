@@ -27,12 +27,10 @@ function CttWinUtilCard() {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-primary/10 text-primary">
-              <Terminal size={18} />
-            </div>
+            <Terminal size={20} className="text-blue-400 shrink-0" />
             <h3 className="font-bold text-base text-base-content">CTT Windows Utility</h3>
           </div>
-          <span className="badge badge-sm badge-warning font-semibold">Internet Required</span>
+          <span className="text-[11px] font-semibold rounded-md px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20">Internet Required</span>
         </div>
 
         <p className="text-xs text-base-content/70 leading-relaxed">
@@ -42,7 +40,7 @@ function CttWinUtilCard() {
 
       <div className="pt-2 flex justify-end">
         <button
-          className="btn btn-sm btn-primary gap-2 rounded-xl shadow-lg shadow-primary/20"
+          className="btn btn-sm btn-primary gap-2 rounded-lg font-medium shadow-sm"
           onClick={handleLaunch}
           onMouseEnter={iconHover.onMouseEnter}
           onMouseLeave={iconHover.onMouseLeave}
@@ -78,12 +76,10 @@ function MassGraveActivationCard() {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-primary/10 text-primary">
-              <Terminal size={18} />
-            </div>
+            <Terminal size={20} className="text-blue-400 shrink-0" />
             <h3 className="font-bold text-base text-base-content">MAS Script Launcher</h3>
           </div>
-          <span className="badge badge-sm badge-warning font-semibold">Internet Required</span>
+          <span className="text-[11px] font-semibold rounded-md px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20">Internet Required</span>
         </div>
 
         <p className="text-xs text-base-content/70 leading-relaxed">
@@ -93,7 +89,7 @@ function MassGraveActivationCard() {
 
       <div className="pt-2 flex justify-end">
         <button
-          className="btn btn-sm btn-primary gap-2 rounded-xl shadow-lg shadow-primary/20"
+          className="btn btn-sm btn-primary gap-2 rounded-lg font-medium shadow-sm"
           onClick={handleLaunch}
           onMouseEnter={iconHover.onMouseEnter}
           onMouseLeave={iconHover.onMouseLeave}

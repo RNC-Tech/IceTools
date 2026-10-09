@@ -147,7 +147,7 @@ export default function WidgetWindow() {
               <MemoryStick size={14} className="text-blue-400" />
               Memory Used
             </span>
-            <span className="text-xs font-mono font-bold text-blue-400">{memory ? `${memory.usedPercent}%` : "-"}</span>
+            <span className="text-xs font-mono font-bold text-blue-400">{memory ? `${Math.round(memory.usedPercent)}%` : "-"}</span>
           </div>
           <progress className="progress progress-primary w-full h-2 rounded-full" value={memory?.usedPercent ?? 0} max="100"></progress>
           {memory && (
@@ -157,7 +157,7 @@ export default function WidgetWindow() {
             </div>
           )}
           <button
-            className="btn btn-primary btn-sm w-full gap-1.5 mt-1 rounded-full text-xs shadow-lg shadow-blue-500/30 font-bold"
+            className="btn btn-primary btn-sm w-full gap-1.5 mt-1 rounded-lg text-xs font-medium shadow-sm"
             onClick={handleClearMemory}
             onMouseEnter={clearIconHover.onMouseEnter}
             onMouseLeave={clearIconHover.onMouseLeave}
@@ -168,30 +168,30 @@ export default function WidgetWindow() {
           </button>
         </div>
 
-        <div className="glass-card p-3.5 flex items-center justify-between border border-blue-500/20">
-          <span className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-slate-300 font-semibold">
+        <div className="glass-card p-3.5 flex items-center justify-between border border-white/[0.08] rounded-xl">
+          <span className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-slate-400 font-medium">
             <Activity size={14} className="text-blue-400" />
             Running Processes
           </span>
           <span className="text-base font-mono font-black text-white">{processCount ?? "-"}</span>
         </div>
 
-        <div className="glass-card p-3.5 space-y-2 border border-blue-500/20">
+        <div className="glass-card p-3.5 space-y-2 border border-white/[0.08] rounded-xl">
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-slate-300 font-semibold">
+            <span className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-slate-400 font-medium">
               <Trash2 size={14} className="text-blue-400" />
               Temporary Files
             </span>
             <span className="text-xs font-mono font-bold text-amber-400">{tempBytes === null ? "-" : formatBytes(tempBytes)}</span>
           </div>
-          <progress className="progress progress-warning w-full h-2 rounded-full" value={tempPercent} max="100"></progress>
+          <progress className="progress progress-warning w-full h-1.5 rounded-full" value={tempPercent} max="100"></progress>
         </div>
 
         <div className="pt-1">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Extra Utilities</h3>
+          <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Extra Utilities</h3>
           <div className="grid grid-cols-3 gap-1.5">
             <button
-              className="btn btn-outline btn-xs gap-1 rounded-full text-[11px] px-2 border-blue-500/30 text-blue-300 hover:text-white"
+              className="btn btn-outline btn-xs gap-1 rounded-lg text-[11px] px-2 border-white/10 text-slate-300 hover:border-white/20 hover:bg-white/5 font-medium"
               onClick={handleOpenFastCom}
               onMouseEnter={fastIconHover.onMouseEnter}
               onMouseLeave={fastIconHover.onMouseLeave}
@@ -205,7 +205,7 @@ export default function WidgetWindow() {
               Fast.com
             </button>
             <button
-              className="btn btn-outline btn-xs gap-1 rounded-full text-[11px] px-2 border-blue-500/30 text-slate-300"
+              className="btn btn-outline btn-xs gap-1 rounded-lg text-[11px] px-2 border-white/10 text-slate-300 hover:border-white/20 hover:bg-white/5 font-medium"
               onClick={handleLaunchCtt}
               onMouseEnter={cttIconHover.onMouseEnter}
               onMouseLeave={cttIconHover.onMouseLeave}
@@ -219,7 +219,7 @@ export default function WidgetWindow() {
               CTT Utility
             </button>
             <button
-              className="btn btn-outline btn-xs gap-1 rounded-full text-[11px] px-2 border-blue-500/30 text-slate-300"
+              className="btn btn-outline btn-xs gap-1 rounded-lg text-[11px] px-2 border-white/10 text-slate-300 hover:border-white/20 hover:bg-white/5 font-medium"
               onClick={handleOpenDownloader}
               onMouseEnter={downloadIconHover.onMouseEnter}
               onMouseLeave={downloadIconHover.onMouseLeave}

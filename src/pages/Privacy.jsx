@@ -97,7 +97,7 @@ export default function Privacy() {
         description="Inspect Windows Defender and Firewall statuses, and toggle privacy options to disable telemetry and tracking."
         badge="System Protection"
         actions={
-          <button className="btn btn-sm btn-outline rounded-full px-4 gap-1.5 border-blue-500/30 text-blue-300" onClick={openWindowsSecurity}>
+          <button className="btn btn-sm btn-outline rounded-lg px-4 gap-1.5 border-white/10 text-slate-200 hover:border-white/20 hover:bg-white/5 font-medium" onClick={openWindowsSecurity}>
             <ExternalLink size={14} />
             Open Windows Security
           </button>
@@ -106,30 +106,28 @@ export default function Privacy() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Defender Card */}
-        <div className="glass-card rounded-2xl p-5 border border-blue-500/15 space-y-4 shadow-xl">
-          <div className="flex items-center gap-2">
-            <div className="p-2.5 rounded-xl bg-blue-500/15 text-blue-400 border border-blue-500/30">
-              <ShieldCheck size={18} />
-            </div>
+        <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-4 shadow-xl">
+          <div className="flex items-center gap-2.5">
+            <ShieldCheck size={20} className="text-blue-400 shrink-0" />
             <h3 className="font-bold text-base text-white">Windows Defender</h3>
           </div>
 
           {defender && defender.available ? (
             <div className="space-y-2.5">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-blue-500/15">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-white/[0.06]">
                 <span className="text-xs font-semibold text-slate-300">Antivirus Protection</span>
                 <StatusBadge ok={defender.antivirusEnabled} okLabel="Enabled" badLabel="Disabled" />
               </div>
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-blue-500/15">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-white/[0.06]">
                 <span className="text-xs font-semibold text-slate-300">Real-time Scanner</span>
                 <StatusBadge ok={defender.realTimeProtectionEnabled} okLabel="Active" badLabel="Inactive" />
               </div>
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-blue-500/15">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-white/[0.06]">
                 <span className="text-xs font-semibold text-slate-300">Anti-Spyware Shield</span>
                 <StatusBadge ok={defender.antispywareEnabled} okLabel="Enabled" badLabel="Disabled" />
               </div>
               {defender.signatureAgeDays !== null && (
-                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-blue-500/15 text-xs">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-white/[0.06] text-xs">
                   <span className="font-semibold text-slate-300">Definition Age</span>
                   <span className="font-mono text-blue-400 font-bold">{defender.signatureAgeDays} day(s) ago</span>
                 </div>
@@ -143,18 +141,16 @@ export default function Privacy() {
         </div>
 
         {/* Firewall Card */}
-        <div className="glass-card rounded-2xl p-5 border border-blue-500/15 space-y-4 shadow-xl">
-          <div className="flex items-center gap-2">
-            <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30">
-              <Flame size={18} />
-            </div>
+        <div className="glass-card rounded-2xl p-5 border border-white/[0.08] space-y-4 shadow-xl">
+          <div className="flex items-center gap-2.5">
+            <Flame size={20} className="text-amber-400 shrink-0" />
             <h3 className="font-bold text-base text-white">Windows Firewall Profiles</h3>
           </div>
 
           {firewall && firewall.available ? (
             <div className="space-y-2.5">
               {firewall.profiles.map((p) => (
-                <div key={p.name} className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-blue-500/15">
+                <div key={p.name} className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-white/[0.06]">
                   <span className="text-xs font-semibold text-slate-300">{p.name} Profile</span>
                   <StatusBadge ok={p.enabled} okLabel="Protected" badLabel="Unprotected" />
                 </div>

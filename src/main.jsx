@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import "./lib/tauriApi.js";
 import App from "./App.jsx";
 import WidgetWindow from "./pages/WidgetWindow.jsx";
 import { ToastProvider } from "./components/ToastProvider.jsx";

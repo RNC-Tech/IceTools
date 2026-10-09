@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Search, Play, Square, RotateCw } from "lucide-react";
+import { Search, Play, Square, RotateCw, ShieldAlert } from "lucide-react";
 import { Settings } from "../components/icons/index.js";
 import PageHeader from "../components/PageHeader.jsx";
 import AppIcon from "../components/AppIcon.jsx";
@@ -10,7 +10,7 @@ import ConfirmModal from "../components/ConfirmModal.jsx";
 
 const START_TYPES = ["Automatic", "AutomaticDelayedStart", "Manual", "Disabled"];
 
-export default function Services() {
+export default function Services({ isAdmin }) {
   const [services, setServices] = useState([]);
   const [filter, setFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("all"); // "all" | "running" | "stopped"
@@ -73,32 +73,48 @@ export default function Services() {
         badge="System Control"
       />
 
+      {!isAdmin && (
+        <div className="flex items-center justify-between p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs">
+          <div className="flex items-center gap-2.5">
+            <ShieldAlert size={16} className="shrink-0 text-amber-400" />
+            <span>Administrator privileges are required to start, stop, or change startup types of Windows services.</span>
+          </div>
+          <button
+            onClick={() => call(window.api.app.relaunchAsAdmin()).catch((err) => toast.error(err.message))}
+            className="btn btn-xs rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3 shrink-0 ml-3 shadow-sm"
+          >
+            Restart as Admin
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="relative w-full sm:w-80">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
-            className="input input-sm input-bordered w-full pl-9 rounded-xl bg-slate-900/60 border-blue-500/20 text-xs text-white placeholder:text-slate-500 focus:border-blue-500/50"
+            type="text"
+            className="input input-sm input-bordered w-full pl-9 rounded-lg bg-slate-900/60 border-white/[0.08] text-xs text-white placeholder:text-slate-500 focus:border-blue-500/50"
             placeholder="Search services by name..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <div className="inline-flex p-1 bg-black/25 rounded-xl border border-white/[0.06] gap-1 w-full sm:w-auto justify-end">
           <button
-            className={`btn btn-xs rounded-full px-3.5 ${statusFilter === "all" ? "btn-primary" : "btn-ghost text-slate-300"}`}
+            className={`btn btn-xs rounded-lg px-3 font-medium transition-all ${statusFilter === "all" ? "bg-blue-600 text-white font-semibold shadow-sm" : "btn-ghost text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"}`}
             onClick={() => setStatusFilter("all")}
           >
             All ({services.length})
           </button>
           <button
-            className={`btn btn-xs rounded-full px-3.5 ${statusFilter === "running" ? "btn-primary" : "btn-ghost text-slate-300"}`}
+            className={`btn btn-xs rounded-lg px-3 font-medium transition-all ${statusFilter === "running" ? "bg-blue-600 text-white font-semibold shadow-sm" : "btn-ghost text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"}`}
             onClick={() => setStatusFilter("running")}
           >
             Running ({services.filter((s) => s.status === "Running").length})
           </button>
           <button
-            className={`btn btn-xs rounded-full px-3.5 ${statusFilter === "stopped" ? "btn-primary" : "btn-ghost text-slate-300"}`}
+            className={`btn btn-xs rounded-lg px-3 font-medium transition-all ${statusFilter === "stopped" ? "bg-blue-600 text-white font-semibold shadow-sm" : "btn-ghost text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"}`}
             onClick={() => setStatusFilter("stopped")}
           >
             Stopped ({services.filter((s) => s.status !== "Running").length})
@@ -109,10 +125,10 @@ export default function Services() {
       {loading ? (
         <TableSkeleton rows={8} columns={4} />
       ) : (
-        <div className="glass-card rounded-2xl overflow-hidden border border-blue-500/15 shadow-xl">
+        <div className="glass-card rounded-2xl overflow-hidden border border-white/[0.08] shadow-xl">
           <div className="overflow-x-auto max-h-[60vh]">
             <table className="table table-sm w-full">
-              <thead className="bg-[#0b172a]/90 text-xs text-slate-300 sticky top-0 backdrop-blur-md border-b border-blue-500/20">
+              <thead className="bg-slate-900/90 text-xs text-slate-300 sticky top-0 backdrop-blur-md border-b border-white/[0.06]">
                 <tr>
                   <th>Service Details</th>
                   <th className="w-28 text-center">Status</th>
